@@ -764,11 +764,11 @@ bool Board::see(const Move m, const int threshold) const {
     const Square from = m.from();
     const Square to   = m.to();
 
-    int swap = PIECE_VALUES[getPiece(to)] - threshold;
+    int swap = getPieceValue(getPiece(to)) - threshold;
     if (swap <= 0)
         return false;
 
-    swap = PIECE_VALUES[getPiece(from)] - swap;
+    swap = getPieceValue(getPiece(from)) - swap;
     if (swap <= 0)
         return true;
 
@@ -796,7 +796,7 @@ bool Board::see(const Move m, const int threshold) const {
         res ^= 1;
 
         if ((bb = stmAttackers & pieces(PAWN))) {
-            swap = PIECE_VALUES[PAWN] - swap;
+            swap = getPieceValue(PAWN) - swap;
             if (swap < res)
                 break;
             occ ^= 1ULL << getLSB(bb);  // LSB as a bitboard
@@ -805,14 +805,14 @@ bool Board::see(const Move m, const int threshold) const {
         }
 
         else if ((bb = stmAttackers & pieces(KNIGHT))) {
-            swap = PIECE_VALUES[KNIGHT] - swap;
+            swap = getPieceValue(KNIGHT) - swap;
             if (swap < res)
                 break;
             occ ^= 1ULL << getLSB(bb);
         }
 
         else if ((bb = stmAttackers & pieces(BISHOP))) {
-            swap = PIECE_VALUES[BISHOP] - swap;
+            swap = getPieceValue(BISHOP) - swap;
             if (swap < res)
                 break;
             occ ^= 1ULL << getLSB(bb);
@@ -821,7 +821,7 @@ bool Board::see(const Move m, const int threshold) const {
         }
 
         else if ((bb = stmAttackers & pieces(ROOK))) {
-            swap = PIECE_VALUES[ROOK] - swap;
+            swap = getPieceValue(ROOK) - swap;
             if (swap < res)
                 break;
             occ ^= 1ULL << getLSB(bb);
@@ -830,7 +830,7 @@ bool Board::see(const Move m, const int threshold) const {
         }
 
         else if ((bb = stmAttackers & pieces(QUEEN))) {
-            swap = PIECE_VALUES[QUEEN] - swap;
+            swap = getPieceValue(QUEEN) - swap;
             if (swap < res)
                 break;
             occ ^= 1ULL << getLSB(bb);

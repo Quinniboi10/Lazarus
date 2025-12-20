@@ -41,7 +41,6 @@ constexpr Color operator~(const Color c) {
 }
 
 enum PieceType : int { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NO_PIECE_TYPE };
-inline array<int, 7> PIECE_VALUES = { 100, 316, 328, 493, 982, 0, 0 };
 
 // clang-format off
 enum Square : int {

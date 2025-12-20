@@ -2,9 +2,14 @@
 
 #include "move.h"
 #include "movegen.h"
+#include "tunable.h"
 #include "types.h"
 
 inline int evaluateMove(const Board& board, const Move m) {
+    const Square from = m.from();
+    const Square to   = m.to();
+    if (board.isCapture(m))
+        return 500'000 + getPieceValue(board.getPiece(to)) * MO_VICTIM_SCALAR - getPieceValue(board.getPiece(from));
     return 0;
 }
 

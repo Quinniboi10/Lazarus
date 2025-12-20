@@ -1,5 +1,8 @@
 #pragma once
 
+#include "tunable.h"
+
+
 #include <bit>
 #include <cassert>
 #include <cstring>
@@ -22,8 +25,6 @@ inline void setBit(u64& bitboard, const usize idx) {
     else
         bitboard &= ~(1ULL << idx);
 }
-
-inline void printBitboard(u64 bitboard);
 
 inline Square popLSB(u64& bb) {
     assert(bb > 0);
@@ -101,6 +102,20 @@ inline void deepFill(std::array<T, N>& arr, const U& value) {
     for (auto& element : arr) {
         deepFill(element, value);
     }
+}
+
+inline i32 getPieceValue(const PieceType pt) {
+    if (pt == PAWN)
+        return PAWN_VALUE;
+    if (pt == KNIGHT)
+        return KNIGHT_VALUE;
+    if (pt == BISHOP)
+        return BISHOP_VALUE;
+    if (pt == ROOK)
+        return ROOK_VALUE;
+    if (pt == QUEEN)
+        return QUEEN_VALUE;
+    return 0;
 }
 
 
