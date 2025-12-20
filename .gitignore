@@ -39,3 +39,21 @@
 
 # debug information files
 *.dwo
+
+# VS Code config
+.vscode
+
+# C-Lion config
+.idea
+
+# Engine build
+Lazarus*
+
+# NNUE
+*.nnue
+
+# Datagen
+data
+
+# Perf profiling data
+perf*
