@@ -246,13 +246,13 @@ int main(int argc, char* argv[]) {
             Square blackKing = getLSB(board.pieces(BLACK, KING));
             cout << "Is in check (white): " << board.isUnderAttack(WHITE, whiteKing) << endl;
             cout << "Is in check (black): " << board.isUnderAttack(BLACK, blackKing) << endl;
-            cout << "En passant square: " << (board.epSquare_ != NO_SQUARE ? squareToAlgebraic(board.epSquare_) : "-") << endl;
-            cout << "Half move clock: " << board.halfMoveClock_ << endl;
+            cout << "En passant square: " << (board.epSquare != NO_SQUARE ? squareToAlgebraic(board.epSquare) : "-") << endl;
+            cout << "Half move clock: " << board.halfMoveClock << endl;
             cout << "Castling rights: { ";
-            cout << squareToAlgebraic(board.castling_[castleIndex(WHITE, true)]) << ", ";
-            cout << squareToAlgebraic(board.castling_[castleIndex(WHITE, false)]) << ", ";
-            cout << squareToAlgebraic(board.castling_[castleIndex(BLACK, true)]) << ", ";
-            cout << squareToAlgebraic(board.castling_[castleIndex(BLACK, false)]);
+            cout << squareToAlgebraic(board.castling[castleIndex(WHITE, true)]) << ", ";
+            cout << squareToAlgebraic(board.castling[castleIndex(WHITE, false)]) << ", ";
+            cout << squareToAlgebraic(board.castling[castleIndex(BLACK, true)]) << ", ";
+            cout << squareToAlgebraic(board.castling[castleIndex(BLACK, false)]);
             cout << " }" << endl;
         }
         else if (command == "debug.incheck")

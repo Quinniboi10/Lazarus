@@ -5,12 +5,13 @@
 #include "tunable.h"
 #include "types.h"
 
-inline int evaluateMove(const Board& board, const Move m) {
+inline int evaluateMove(const Board& board, const Search::ThreadInfo& thisThread, const Move m) {
     const Square from = m.from();
     const Square to   = m.to();
     if (board.isCapture(m))
         return 500'000 + getPieceValue(board.getPiece(to)) * MO_VICTIM_SCALAR - getPieceValue(board.getPiece(from));
-    return 0;
+
+    return thisThread.getHistory(board, m);
 }
 
 template<MovegenMode mode>
@@ -20,12 +21,12 @@ struct Movepicker {
     u16             seen;
     Move            TTMove;
 
-    Movepicker(const Board& board) {
+    Movepicker(const Board& board, const Search::ThreadInfo& thisThread) {
         moves = Movegen::generateMoves<mode>(board);
         seen  = 0;
 
         for (usize i = 0; i < moves.length; i++) {
-            moveScores[i] = evaluateMove(board, moves.moves[i]);
+            moveScores[i] = evaluateMove(board, thisThread, moves.moves[i]);
         }
     }
 

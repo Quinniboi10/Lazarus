@@ -200,8 +200,8 @@ int NNUE::forwardPass(const Board* board, const AccumulatorPair& accumulators) c
     const usize divisor      = 32 / OUTPUT_BUCKETS;
     const usize outputBucket = (popcount(board->pieces()) - 2) / divisor;
 
-    const Accumulator& accumulatorSTM = board->stm_ == WHITE ? accumulators.white_ : accumulators.black_;
-    const Accumulator& accumulatorOPP = ~board->stm_ == WHITE ? accumulators.white_ : accumulators.black_;
+    const Accumulator& accumulatorSTM = board->stm == WHITE ? accumulators.white_ : accumulators.black_;
+    const Accumulator& accumulatorOPP = ~board->stm == WHITE ? accumulators.white_ : accumulators.black_;
 
     // Accumulate output for STM and OPP using separate weight segments
     i64 eval = 0;
@@ -246,8 +246,8 @@ void NNUE::showBuckets(const Board* board, const AccumulatorPair& accumulators) 
     cout << "|   Bucket   | Evaluation |" << endl;
     cout << "+------------+------------+" << endl;
 
-    const Accumulator& accumulatorSTM = board->stm_ == WHITE ? accumulators.white_ : accumulators.black_;
-    const Accumulator& accumulatorOPP = ~board->stm_ == WHITE ? accumulators.white_ : accumulators.black_;
+    const Accumulator& accumulatorSTM = board->stm == WHITE ? accumulators.white_ : accumulators.black_;
+    const Accumulator& accumulatorOPP = ~board->stm == WHITE ? accumulators.white_ : accumulators.black_;
 
     for (usize outputBucket = 0; outputBucket < OUTPUT_BUCKETS; outputBucket++) {
         // Accumulate output for STM and OPP using separate weight segments

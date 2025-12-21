@@ -23,7 +23,7 @@ i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo
     if (bestScore > alpha)
         alpha = bestScore;
 
-    Movepicker<NOISY_ONLY> picker(board);
+    Movepicker<NOISY_ONLY> picker(board, thisThread);
     while (picker.hasNext()) {
         const Move m = picker.getNext();
 
@@ -71,7 +71,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
     i16 bestScore = -INF_I16;
 
-    Movepicker<ALL_MOVES> picker(board);
+    Movepicker<ALL_MOVES> picker(board, thisThread);
     while (picker.hasNext()) {
         // Check if the search has been aborted
         if (thisThread.breakFlag.load(std::memory_order_relaxed))
@@ -104,6 +104,9 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             }
         }
         if (score >= beta) {
+            const i32 historyBonus = ( HIST_BONUS_A * depth * depth + HIST_BONUS_B * depth + HIST_BONUS_C ) / 1024;
+            if (board.isQuiet(m))
+                thisThread.getHistory(board, m).update(historyBonus);
             break;
         }
     }
@@ -127,7 +130,7 @@ MoveEvaluation iterativeDeepening(Board board, ThreadInfo& thisThread, SearchPar
     if (sp.mtime)
         searchTime = sp.mtime;
     else
-        searchTime = (board.stm_ == WHITE ? sp.wtime : sp.btime) / (static_cast<double>(DEFAULT_MOVES_TO_GO) / 1024) + (board.stm_ == WHITE ? sp.winc : sp.binc) / (static_cast<double>(INC_DIVISOR) / 1024);
+        searchTime = (board.stm == WHITE ? sp.wtime : sp.btime) / (static_cast<double>(DEFAULT_MOVES_TO_GO) / 1024) + (board.stm == WHITE ? sp.winc : sp.binc) / (static_cast<double>(INC_DIVISOR) / 1024);
 
     if (searchTime != 0)
         searchTime -= MOVE_OVERHEAD;

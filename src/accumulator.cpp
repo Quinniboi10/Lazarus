@@ -36,7 +36,7 @@ void AccumulatorPair::resetAccumulators(const Board& board) {
 }
 
 void AccumulatorPair::update(const Board& board, const Move m, const PieceType toPT) {
-    const Color     stm   = ~board.stm_;
+    const Color     stm   = ~board.stm;
     const Square    from  = m.from();
     const Square    to    = m.to();
     const MoveType  mt    = m.typeOf();

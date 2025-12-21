@@ -1,16 +1,16 @@
 template<MovegenMode mode>
 void Movegen::pawnMoves(const Board& board, MoveList& moves) {
-    const u64       pawns        = board.pieces(board.stm_, PAWN);
-    const Direction pushDir      = board.stm_ == WHITE ? NORTH : SOUTH;
+    const u64       pawns        = board.pieces(board.stm, PAWN);
+    const Direction pushDir      = board.stm == WHITE ? NORTH : SOUTH;
     u64             singlePushes = shift(pushDir, pawns) & ~board.pieces();
     u64             pushPromo    = singlePushes & (MASK_RANK[RANK1] | MASK_RANK[RANK8]);
     singlePushes ^= pushPromo;
 
     u64 doublePushes = shift(pushDir, singlePushes) & ~board.pieces();
-    doublePushes &= board.stm_ == WHITE ? MASK_RANK[RANK4] : MASK_RANK[RANK5];
+    doublePushes &= board.stm == WHITE ? MASK_RANK[RANK4] : MASK_RANK[RANK5];
 
-    u64 captureEast = shift(pushDir + EAST, pawns & ~MASK_FILE[HFILE]) & board.pieces(~board.stm_);
-    u64 captureWest = shift(pushDir + WEST, pawns & ~MASK_FILE[AFILE]) & board.pieces(~board.stm_);
+    u64 captureEast = shift(pushDir + EAST, pawns & ~MASK_FILE[HFILE]) & board.pieces(~board.stm);
+    u64 captureWest = shift(pushDir + WEST, pawns & ~MASK_FILE[AFILE]) & board.pieces(~board.stm);
 
     u64 eastPromo = captureEast & (MASK_RANK[RANK1] | MASK_RANK[RANK8]);
     captureEast ^= eastPromo;
@@ -18,10 +18,10 @@ void Movegen::pawnMoves(const Board& board, MoveList& moves) {
     captureWest ^= westPromo;
 
     if constexpr (mode == NOISY_ONLY) {
-        singlePushes &= board.pieces(~board.stm_);
-        doublePushes &= board.pieces(~board.stm_);
-        captureEast &= board.pieces(~board.stm_);
-        captureWest &= board.pieces(~board.stm_);
+        singlePushes &= board.pieces(~board.stm);
+        doublePushes &= board.pieces(~board.stm);
+        captureEast &= board.pieces(~board.stm);
+        captureWest &= board.pieces(~board.stm);
     }
 
     auto addPromos = [&](const Square from, const Square to) {
@@ -96,22 +96,22 @@ void Movegen::pawnMoves(const Board& board, MoveList& moves) {
         addPromos(from, to);
     }
 
-    if (board.epSquare_ != NO_SQUARE) {
-        u64 epMoves = pawnAttackBB(~board.stm_, board.epSquare_) & board.pieces(board.stm_, PAWN);
+    if (board.epSquare != NO_SQUARE) {
+        u64 epMoves = pawnAttackBB(~board.stm, board.epSquare) & board.pieces(board.stm, PAWN);
 
         while (epMoves) {
             const Square from = popLSB(epMoves);
 
-            moves.add(from, board.epSquare_, EN_PASSANT);
+            moves.add(from, board.epSquare, EN_PASSANT);
         }
     }
 }
 
 template<MovegenMode mode>
 void Movegen::knightMoves(const Board& board, MoveList& moves) {
-    u64 knightBB = board.pieces(board.stm_, KNIGHT);
+    u64 knightBB = board.pieces(board.stm, KNIGHT);
 
-    const u64 friendly = board.pieces(board.stm_);
+    const u64 friendly = board.pieces(board.stm);
 
     while (knightBB > 0) {
         const Square currentSquare = popLSB(knightBB);
@@ -119,7 +119,7 @@ void Movegen::knightMoves(const Board& board, MoveList& moves) {
         u64 knightMoves = KNIGHT_ATTACKS[currentSquare];
         knightMoves &= ~friendly;
         if constexpr (mode == NOISY_ONLY)
-            knightMoves &= board.pieces(~board.stm_);
+            knightMoves &= board.pieces(~board.stm);
 
         while (knightMoves > 0) {
             const Square to = popLSB(knightMoves);
@@ -130,10 +130,10 @@ void Movegen::knightMoves(const Board& board, MoveList& moves) {
 
 template<MovegenMode mode>
 void Movegen::bishopMoves(const Board& board, MoveList& moves) {
-    u64 bishopBB = board.pieces(board.stm_, BISHOP, QUEEN);
+    u64 bishopBB = board.pieces(board.stm, BISHOP, QUEEN);
 
     const u64 occ      = board.pieces();
-    const u64 friendly = board.pieces(board.stm_);
+    const u64 friendly = board.pieces(board.stm);
 
     while (bishopBB > 0) {
         const Square currentSquare = popLSB(bishopBB);
@@ -141,7 +141,7 @@ void Movegen::bishopMoves(const Board& board, MoveList& moves) {
         u64 bishopMoves = getBishopAttacks(currentSquare, occ);
         bishopMoves &= ~friendly;
         if constexpr (mode == NOISY_ONLY)
-            bishopMoves &= board.pieces(~board.stm_);
+            bishopMoves &= board.pieces(~board.stm);
 
         while (bishopMoves > 0) {
             const Square to = popLSB(bishopMoves);
@@ -152,10 +152,10 @@ void Movegen::bishopMoves(const Board& board, MoveList& moves) {
 
 template<MovegenMode mode>
 void Movegen::rookMoves(const Board& board, MoveList& moves) {
-    u64 rookBB = board.pieces(board.stm_, ROOK, QUEEN);
+    u64 rookBB = board.pieces(board.stm, ROOK, QUEEN);
 
     const u64 occ      = board.pieces();
-    const u64 friendly = board.pieces(board.stm_);
+    const u64 friendly = board.pieces(board.stm);
 
     while (rookBB > 0) {
         const Square currentSquare = popLSB(rookBB);
@@ -163,7 +163,7 @@ void Movegen::rookMoves(const Board& board, MoveList& moves) {
         u64 rookMoves = getRookAttacks(currentSquare, occ);
         rookMoves &= ~friendly;
         if constexpr (mode == NOISY_ONLY)
-            rookMoves &= board.pieces(~board.stm_);
+            rookMoves &= board.pieces(~board.stm);
 
         while (rookMoves > 0) {
             const Square to = popLSB(rookMoves);
@@ -174,32 +174,32 @@ void Movegen::rookMoves(const Board& board, MoveList& moves) {
 
 template<MovegenMode mode>
 void Movegen::kingMoves(const Board& board, MoveList& moves) {
-    const Square kingSq = getLSB(board.pieces(board.stm_, KING));
+    const Square kingSq = getLSB(board.pieces(board.stm, KING));
 
     assert(kingSq >= a1);
     assert(kingSq < NO_SQUARE);
 
     u64 kingMoves = KING_ATTACKS[kingSq];
-    kingMoves &= ~board.pieces(board.stm_);
+    kingMoves &= ~board.pieces(board.stm);
     if constexpr (mode == NOISY_ONLY)
-        kingMoves &= board.pieces(~board.stm_);
+        kingMoves &= board.pieces(~board.stm);
 
     while (kingMoves > 0) {
         const Square to = popLSB(kingMoves);
         moves.add(kingSq, to);
     }
 
-    if (board.canCastle(board.stm_, true))
-        moves.add(kingSq, board.castleSq(board.stm_, true), CASTLE);
-    if (board.canCastle(board.stm_, false))
-        moves.add(kingSq, board.castleSq(board.stm_, false), CASTLE);
+    if (board.canCastle(board.stm, true))
+        moves.add(kingSq, board.castleSq(board.stm, true), CASTLE);
+    if (board.canCastle(board.stm, false))
+        moves.add(kingSq, board.castleSq(board.stm, false), CASTLE);
 }
 
 template<MovegenMode mode>
 MoveList Movegen::generateMoves(const Board& board) {
     MoveList moves;
     kingMoves<mode>(board, moves);
-    if (board.doubleCheck_)
+    if (board.doubleCheck)
         return moves;
 
     pawnMoves<mode>(board, moves);

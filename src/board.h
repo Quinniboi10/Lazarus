@@ -10,34 +10,34 @@ constexpr array<Square, 4> KING_CASTLE_END_SQ = { c8, g8, c1, g1 };
 
 struct Board {
     // Index is based on square, returns the piece type
-    array<PieceType, 64> mailbox_;
+    array<PieceType, 64> mailbox;
     // Indexed pawns, knights, bishops, rooks, queens, king
-    array<u64, 6> byPieces_;
+    array<u64, 6> byPieces;
     // Index is based on color
-    array<u64, 2> byColor_;
+    array<u64, 2> byColor;
     // Board hash
-    u64 zobrist_;
+    u64 zobrist;
 
     // History of positions
-    std::vector<u64> posHistory_;
+    std::vector<u64> posHistory;
 
-    bool          doubleCheck_;
-    u64           checkMask_;
-    u64           pinned_;
-    array<u64, 2> pinnersPerC_;
+    bool          doubleCheck;
+    u64           checkMask;
+    u64           pinned;
+    array<u64, 2> pinnersPerC;
 
 
-    Square epSquare_;
+    Square epSquare;
     // Index KQkq
-    array<Square, 4> castling_;
+    array<Square, 4> castling;
 
-    Color stm_;
+    Color stm;
 
-    usize halfMoveClock_;
-    usize fullMoveClock_;
+    usize halfMoveClock;
+    usize fullMoveClock;
 
    private:
-    bool fromNull_;
+    bool fromNull;
 
     char getPieceAsStr(Square sq) const;
 
@@ -62,7 +62,7 @@ struct Board {
     static void fillZobristTable();
 
     constexpr Square castleSq(const Color c, const bool kingside) const {
-        return castling_[castleIndex(c, kingside)];
+        return castling[castleIndex(c, kingside)];
     }
 
     u8 count(PieceType pt) const;

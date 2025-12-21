@@ -22,16 +22,16 @@ Move::Move(const string& strIn, const Board& board) {
                       (from == e8 && to == c8 && board.canCastle(BLACK, false)))) {
         const bool kingside = to > from;
 
-        to = board.castleSq(board.stm_, kingside);
+        to = board.castleSq(board.stm, kingside);
 
         flags = CASTLE;
     }
-    else if (chess960 && board.getPiece(from) == KING && ((1ULL << to) & board.pieces(board.stm_, ROOK))) {
+    else if (chess960 && board.getPiece(from) == KING && ((1ULL << to) & board.pieces(board.stm, ROOK))) {
         const bool kingside = to > from;
-        if (board.canCastle(board.stm_, kingside))
+        if (board.canCastle(board.stm, kingside))
             flags = CASTLE;
     }
-    else if (to == board.epSquare_ && ((1ULL << from) & board.pieces(board.stm_, PAWN)))
+    else if (to == board.epSquare && ((1ULL << from) & board.pieces(board.stm, PAWN)))
         flags = EN_PASSANT;
 
     *this = Move(from, to, flags);

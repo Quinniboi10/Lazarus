@@ -7,16 +7,15 @@ ThreadInfo::ThreadInfo(const ThreadType type, std::atomic<bool>& breakFlag) :
     breakFlag(breakFlag) {
     breakFlag.store(false, std::memory_order_relaxed);
 
+    deepFill(history, 0);
     nodes     = 0;
     seldepth  = 0;
-    minNmpPly = 0;
 }
 ThreadInfo::ThreadInfo(const ThreadInfo& other) :
     accumulatorStack(other.accumulatorStack),
     type(other.type),
     breakFlag(other.breakFlag),
-    seldepth(other.seldepth),
-    minNmpPly(other.minNmpPly) {
+    seldepth(other.seldepth) {
     nodes.store(other.nodes.load(std::memory_order_relaxed), std::memory_order_relaxed);
 }
 
@@ -39,9 +38,9 @@ void ThreadInfo::refresh(const Board& b) {
 }
 
 void ThreadInfo::reset() {
-    nodes.store(0, std::memory_order_relaxed);
+    deepFill(history, 0);
+    nodes = 0;
     seldepth  = 0;
-    minNmpPly = 0;
 }
 
 }

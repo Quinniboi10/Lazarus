@@ -1,13 +1,32 @@
 #pragma once
 
 #include "search.h"
-#include "tunable.h"
 #include "types.h"
 
 #include <utility>
 
+struct HistoryEntry {
+    i32 value;
+
+    HistoryEntry() : value(0) {}
+    HistoryEntry(const i32 v) : value(v) {}
+
+    operator i32() const {
+        return value;
+    }
+
+    void update(const i32 bonus) {
+        const i32 clampedBonus = std::clamp<i32>(bonus, -MAX_HISTORY, MAX_HISTORY);
+        value += clampedBonus - value * abs(clampedBonus) / MAX_HISTORY;
+    }
+};
+
 namespace Search {
 struct ThreadInfo {
+    // History is indexed [stm][from][to]
+    MultiArray<HistoryEntry, 2, 64, 64> history;
+
+    // All the accumulators for each thread's search
     Stack<AccumulatorPair, MAX_PLY + 1> accumulatorStack;
 
     ThreadType type;
@@ -17,12 +36,14 @@ struct ThreadInfo {
     std::atomic<u64> nodes;
     usize            seldepth;
 
-    usize minNmpPly;
-
     ThreadInfo(ThreadType type, std::atomic<bool>& breakFlag);
 
     // Copy constructor
     ThreadInfo(const ThreadInfo& other);
+
+    // Accessors for the histories
+    HistoryEntry& getHistory(const Board& b, const Move m) { return history[b.stm][m.from()][m.to()]; }
+    const HistoryEntry& getHistory(const Board& b, const Move m) const { return history[b.stm][m.from()][m.to()]; }
 
     std::pair<Board, ThreadStackManager> makeMove(const Board& board, Move m);
 
