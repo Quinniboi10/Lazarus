@@ -22,7 +22,7 @@ struct Searcher {
     void waitUntilFinished() const;
 
     void reset() {
-        threadData.reset();
+        threadData->reset();
     }
 
     void searchReport(const Board& board, usize depth, i32 score, const PvList& pv);

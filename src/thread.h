@@ -47,7 +47,9 @@ struct ThreadInfo {
 
     std::pair<Board, ThreadStackManager> makeMove(const Board& board, Move m);
 
+    // Reset the accumulator stack for a given position
     void refresh(const Board& b);
+    // Reset data that lasts between searches
     void reset();
 };
 

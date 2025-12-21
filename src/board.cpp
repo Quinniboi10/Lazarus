@@ -312,6 +312,8 @@ void Board::reset() {
     resetMailbox();
     resetZobrist();
     updateCheckPin();
+
+    posHistory = { zobrist };
 }
 
 
@@ -329,8 +331,8 @@ void Board::loadFromFEN(const string& fen) {
 
     int currIdx = 56;
 
-    const char whitePieces[6] = { 'P', 'N', 'B', 'R', 'Q', 'K' };
-    const char blackPieces[6] = { 'p', 'n', 'b', 'r', 'q', 'k' };
+    constexpr char whitePieces[6] = { 'P', 'N', 'B', 'R', 'Q', 'K' };
+    constexpr char blackPieces[6] = { 'p', 'n', 'b', 'r', 'q', 'k' };
 
     for (const string& rank : rankTokens) {
         for (const char c : rank) {
@@ -399,6 +401,8 @@ void Board::loadFromFEN(const string& fen) {
     resetMailbox();
     resetZobrist();
     updateCheckPin();
+
+    posHistory = { zobrist };
 }
 
 string Board::fen() const {
@@ -730,20 +734,20 @@ bool Board::isDraw() {
         return Movegen::generateLegalMoves(*this).length != 0;
 
     // Insufficient material
-    if (pieces(PAWN) == 0                                  // No pawns
-        && pieces(QUEEN) == 0                              // No queens
-        && pieces(ROOK) == 0                               // No rooks
-        && ((pieces(BISHOP) & LIGHT_SQ_BB) == 0            // No light sq bishops
-            || (pieces(BISHOP) & DARK_SQ_BB) == 0)         // OR no dark sq bishops
-        && ((pieces(BISHOP) == 0 || pieces(KNIGHT)) == 0)  // Not bishop + knight
-        && popcount(pieces(KNIGHT)) < 2)                   // Under 2 knights
-        return true;
+    if (pieces(PAWN) == 0                                // No pawns
+        && pieces(QUEEN) == 0                            // No queens
+        && pieces(ROOK) == 0                             // No rooks
+        && ((pieces(BISHOP) & LIGHT_SQ_BB) == 0          // No light sq bishops
+            || (pieces(BISHOP) & DARK_SQ_BB) == 0)       // OR no dark sq bishops
+        && (pieces(BISHOP) == 0 || pieces(KNIGHT) == 0)  // Not bishop + knight
+        && popcount(pieces(KNIGHT)) < 2)                 // Under 2 knights
+            return true;
 
     // Threefold
     u8 seen = 0;
     for (const u64 hash : posHistory) {
         seen += hash == zobrist;
-        if (seen >= 2)
+        if (seen >= 3)
             return true;
     }
     return false;

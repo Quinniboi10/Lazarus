@@ -12,6 +12,7 @@ ThreadInfo::ThreadInfo(const ThreadType type, std::atomic<bool>& breakFlag) :
     seldepth  = 0;
 }
 ThreadInfo::ThreadInfo(const ThreadInfo& other) :
+    history(other.history),
     accumulatorStack(other.accumulatorStack),
     type(other.type),
     breakFlag(other.breakFlag),
@@ -39,8 +40,6 @@ void ThreadInfo::refresh(const Board& b) {
 
 void ThreadInfo::reset() {
     deepFill(history, 0);
-    nodes = 0;
-    seldepth  = 0;
 }
 
 }

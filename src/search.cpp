@@ -71,6 +71,9 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
     i16 bestScore = -INF_I16;
 
+    i16 movesSeen = 0;
+    i16 movesSearched = 0;
+
     Movepicker<ALL_MOVES> picker(board, thisThread);
     while (picker.hasNext()) {
         // Check if the search has been aborted
@@ -89,6 +92,12 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
         if (!board.isLegal(m))
             continue;
+
+        movesSeen++;
+
+        // Pre-moveloop pruning
+
+        movesSearched++;
 
         auto [newBoard, threadManager] = thisThread.makeMove(board, m);
         thisThread.nodes.fetch_add(1, std::memory_order_relaxed);
@@ -109,6 +118,14 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
                 thisThread.getHistory(board, m).update(historyBonus);
             break;
         }
+    }
+
+    // Checkmate/stalemate detection
+    if (!movesSeen) {
+        if (board.inCheck()) {
+            return -MATE_SCORE + static_cast<i16>(ply);
+        }
+        return 0;
     }
 
     return bestScore;

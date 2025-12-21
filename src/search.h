@@ -68,17 +68,17 @@ struct SearchLimit {
     }
 };
 
-constexpr i32 MATE_SCORE       = 32767;
-constexpr i32 MATE_IN_MAX_PLY  = MATE_SCORE - MAX_PLY;
-constexpr i32 MATED_IN_MAX_PLY = -MATE_SCORE + static_cast<i32>(MAX_PLY);
+constexpr i16 MATE_SCORE       = 32767;
+constexpr i16 MATE_IN_MAX_PLY  = MATE_SCORE - MAX_PLY;
+constexpr i16 MATED_IN_MAX_PLY = -MATE_SCORE + static_cast<i32>(MAX_PLY);
 
-inline bool isWin(const i32 score) {
+inline bool isWin(const i16 score) {
     return score >= MATE_IN_MAX_PLY;
 }
-inline bool isLoss(const i32 score) {
+inline bool isLoss(const i16 score) {
     return score <= MATED_IN_MAX_PLY;
 }
-inline bool isDecisive(const i32 score) {
+inline bool isDecisive(const i16 score) {
     return isWin(score) || isLoss(score);
 }
 

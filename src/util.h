@@ -19,7 +19,7 @@ inline bool readBit(const u64 bb, const usize idx) {
 
 template<u8 value>
 inline void setBit(u64& bitboard, const usize idx) {
-    assert(index <= sizeof(bitboard) * 8);
+    assert(idx <= sizeof(u64) * 8);
     if constexpr (value)
         bitboard |= (1ULL << idx);
     else

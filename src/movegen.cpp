@@ -297,7 +297,7 @@ u64 perft(Board& board, const usize depth) {
 
         testBoard.move(m);
 
-        assert(board.roughKeyAfter(m) == testBoard.zobrist_ || m.typeOf() == CASTLE || m.typeOf() == EN_PASSANT || board.getPiece(m.from()) == ROOK || board.getPiece(m.to()) == ROOK || board.getPiece(m.from()) == KING);
+        assert(board.roughKeyAfter(m) == testBoard.zobrist || m.typeOf() == CASTLE || m.typeOf() == EN_PASSANT || board.getPiece(m.from()) == ROOK || board.getPiece(m.to()) == ROOK || board.getPiece(m.from()) == KING);
 
         nodes += perft(testBoard, depth - 1);
     }
