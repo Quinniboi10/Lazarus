@@ -34,7 +34,7 @@ void Searcher::waitUntilFinished() {
 void Searcher::searchReport(const Board& board, const usize depth, const i32 score, const PvList& pv) {
     u64 nodes = threadData->nodes;
 
-    fmt::print("info depth {} seldepth {} time {} nodes {}", depth, threadData->seldepth, time.elapsed(), nodes);
+    fmt::print("info depth {} seldepth {} time {} nodes {} hashfull {}", depth, threadData->seldepth, time.elapsed(), nodes, transpositionTable.hashfull());
     if (time.elapsed() > 0)
         fmt::print(" nps {}", nodes * 1000 / time.elapsed());
 

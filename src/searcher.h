@@ -2,10 +2,13 @@
 
 #include "search.h"
 #include "thread.h"
+#include "ttable.h"
 
 #include <thread>
 
 struct Searcher {
+    TranspositionTable transpositionTable;
+
     std::atomic<bool>                    stopFlag;
     Stopwatch<std::chrono::milliseconds> time;
     std::unique_ptr<ThreadInfo>          threadData;
@@ -13,11 +16,14 @@ struct Searcher {
 
     bool doReporting;
 
-    Searcher(const bool doReporting) {
+    explicit Searcher(const bool doReporting) {
         stopFlag.store(true, std::memory_order_relaxed);
         time.reset();
+
         threadData        = std::make_unique<ThreadInfo>(ThreadType::MAIN, stopFlag);
         this->doReporting = doReporting;
+
+        reset();
     }
 
     void start(const Board& board, SearchParams sp);

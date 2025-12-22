@@ -150,19 +150,19 @@ int main(int argc, char* argv[]) {
         else if (tokens[0] == "go") {
             searcher.stop();
 
-            usize depth = std::stoi(getValueFollowing(command, "depth", MAX_PLY));
+            const usize depth = std::stoi(getValueFollowing(command, "depth", MAX_PLY));
 
             usize maxNodes  = std::stoi(getValueFollowing(command, "nodes", 0));
             usize softNodes = std::stoi(getValueFollowing(command, "softnodes", 0));
 
-            usize mtime = std::stoi(getValueFollowing(command, "movetime", 0));
-            usize wtime = std::stoi(getValueFollowing(command, "wtime", 0));
-            usize btime = std::stoi(getValueFollowing(command, "btime", 0));
+            const usize mtime = std::stoi(getValueFollowing(command, "movetime", 0));
+            const i64 wtime = std::stoi(getValueFollowing(command, "wtime", 0));
+            const i64 btime = std::stoi(getValueFollowing(command, "btime", 0));
 
-            usize winc = std::stoi(getValueFollowing(command, "winc", 0));
-            usize binc = std::stoi(getValueFollowing(command, "binc", 0));
+            const usize winc = std::stoi(getValueFollowing(command, "winc", 0));
+            const usize binc = std::stoi(getValueFollowing(command, "binc", 0));
 
-            usize mate = std::stoi(getValueFollowing(command, "mate", 0));
+            const usize mate = std::stoi(getValueFollowing(command, "mate", 0));
 
             if (nodesAreSoftNodes && maxNodes) {
                 softNodes = maxNodes;

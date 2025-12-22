@@ -19,14 +19,14 @@ struct Movepicker {
     MoveList        moves;
     array<int, 256> moveScores;
     u16             seen;
-    Move            TTMove;
 
-    Movepicker(const Board& board, const ThreadInfo& thisThread) {
+    Movepicker(const Board& board, const ThreadInfo& thisThread, const Move ttMove) {
         moves = Movegen::generateMoves<mode>(board);
         seen  = 0;
 
         for (usize i = 0; i < moves.length; i++) {
-            moveScores[i] = evaluateMove(board, thisThread, moves.moves[i]);
+            const Move m = moves.moves[i];
+            moveScores[i] = evaluateMove(board, thisThread, m) + 900'000 * (m == ttMove);
         }
     }
 

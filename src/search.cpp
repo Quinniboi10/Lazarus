@@ -22,7 +22,7 @@ i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo
     if (bestScore > alpha)
         alpha = bestScore;
 
-    Movepicker<NOISY_ONLY> picker(board, thisThread);
+    Movepicker<NOISY_ONLY> picker(board, thisThread, Move::null());
     while (picker.hasNext()) {
         const Move m = picker.getNext();
 
@@ -47,7 +47,7 @@ i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo
 }
 // Main search
 template<NodeType isPV>
-i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, SearchStack* ss, ThreadInfo& thisThread, SearchLimit& sl) {
+i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, SearchStack* ss, ThreadInfo& thisThread, TranspositionTable& tt, SearchLimit& sl) {
     if (depth + ply > MAX_PLY)
         depth = MAX_PLY - ply;
     if constexpr (isPV)
@@ -68,12 +68,19 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             return alpha;
     }
 
+    Move bestMove = Move::null();
     i16 bestScore = -INF_I16;
 
     i16 movesSeen     = 0;
     i16 movesSearched = 0;
 
-    Movepicker<ALL_MOVES> picker(board, thisThread);
+    TTFlag ttFlag = FAIL_LOW;
+
+    // TT probing
+    Transposition& ttEntry = tt.getEntry(board.zobrist);
+    const bool ttHit = ttEntry.key == board.zobrist;
+
+    Movepicker<ALL_MOVES> picker(board, thisThread, ttHit ? ttEntry.move : Move::null());
     while (picker.hasNext()) {
         // Check if the search has been aborted
         if (thisThread.breakFlag.load(std::memory_order_relaxed))
@@ -94,24 +101,27 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
         movesSeen++;
 
-        // Pre-moveloop pruning
+        // Moveloop pruning
 
         movesSearched++;
 
         auto [newBoard, threadManager] = thisThread.makeMove(board, m);
         thisThread.nodes.fetch_add(1, std::memory_order_relaxed);
 
-        const i16 score = -search<isPV>(newBoard, depth - 1, ply + 1, -beta, -alpha, ss + 1, thisThread, sl);
+        const i16 score = -search<isPV>(newBoard, depth - 1, ply + 1, -beta, -alpha, ss + 1, thisThread, tt, sl);
 
         if (score > bestScore) {
             bestScore = score;
             if (bestScore > alpha) {
+                bestMove = m;
+                ttFlag = EXACT;
                 alpha = bestScore;
                 if constexpr (isPV)
                     ss->pv.update(m, (ss + 1)->pv);
             }
         }
         if (score >= beta) {
+            ttFlag = BETA_CUTOFF;
             const i32 historyBonus = (HIST_BONUS_A * depth * depth + HIST_BONUS_B * depth + HIST_BONUS_C) / 1024;
             if (board.isQuiet(m))
                 thisThread.getHistory(board, m).update(historyBonus);
@@ -127,10 +137,21 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         return 0;
     }
 
+    // Adjust TT score for mates
+    i16 ttScore = bestScore;
+    if (isLoss(bestScore))
+        ttScore = bestScore - static_cast<i16>(ply);
+    else if (isWin(bestScore))
+        ttScore = bestScore + static_cast<i16>(ply);
+
+    const Transposition newEntry(board.zobrist, bestMove, ttFlag, ttScore, depth);
+
+    if (tt.shouldReplace(ttEntry, newEntry))
+        ttEntry = newEntry;
+
     return bestScore;
 }
 
-// This can't take a board as a reference because isLegal can change the current board state for a few dozen clock cycles
 MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
     // In future this would be logic to pick the thread's data in SMP
     ThreadInfo& thisThread = *threadData;
@@ -141,14 +162,14 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
     thisThread.refresh(board);
     const bool isMain = thisThread.type == ThreadType::MAIN;
 
-    i64 searchTime;
-    if (sp.mtime)
-        searchTime = sp.mtime;
-    else
-        searchTime = (board.stm == WHITE ? sp.wtime : sp.btime) / (static_cast<double>(DEFAULT_MOVES_TO_GO) / 1024) + (board.stm == WHITE ? sp.winc : sp.binc) / (static_cast<double>(INC_DIVISOR) / 1024);
+    // Time management
+    const i64 time = board.stm == WHITE ? sp.wtime : sp.btime;
+    const i64 inc = board.stm == WHITE ? sp.winc : sp.binc;
 
-    if (searchTime != 0)
-        searchTime -= MOVE_OVERHEAD;
+    i64 searchTime = sp.mtime ? sp.mtime : (time / 20 + inc / 2);
+
+    if (time != 0 || inc != 0)
+        searchTime = std::max<i64>(searchTime - static_cast<i64>(MOVE_OVERHEAD), 1);
 
     const i64 softTime = searchTime * 0.6;
 
@@ -162,7 +183,7 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
 
     const usize depth = std::min(sp.depth, MAX_PLY);
 
-    i32    lastScore{};
+    i16    lastScore{};
     PvList lastPV{};
 
     auto countNodes = [&]() -> u64 { return thisThread.nodes; };
@@ -177,7 +198,7 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
                 return thisThread.breakFlag.load(std::memory_order_relaxed) || (sp.softNodes > 0 && countNodes() > sp.softNodes);
         };
 
-        const i32 score = search<PV>(board, currDepth, 0, -INF_I16, INF_I16, ss, thisThread, sl);
+        const i16 score = search<PV>(board, currDepth, 0, -INF_I16, INF_I16, ss, thisThread, transpositionTable, sl);
 
         if (currDepth == 1) {
             lastScore = score;
@@ -198,7 +219,7 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
 
         if (isMain) {
             // Go mate
-            if (sp.mate > 0 && static_cast<usize>((MATE_SCORE - std::abs(score)) / 2 + 1) <= sp.mate)
+            if (sp.mate > 0 && MATE_SCORE - std::abs(score) / 2 + 1 <= sp.mate)
                 break;
 
             // Soft TM
@@ -216,7 +237,7 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
 
     assert(lastPV.length > 0);
     assert(!lastPV.moves[0].isNull());
-    return MoveEvaluation(lastPV.moves[0], lastScore);
+    return { lastPV.moves[0], lastScore };
 }
 
 void bench() {
@@ -289,7 +310,6 @@ void bench() {
         Stopwatch<std::chrono::milliseconds> time;
 
         Searcher searcher(false);
-        searcher.reset();
         searcher.start(board, SearchParams(time, BENCH_DEPTH, 0, 0, 0, 0, 0, 0, 0, 0));
         searcher.waitUntilFinished();
 
@@ -306,9 +326,9 @@ void bench() {
     cout << "Benchmark Completed." << endl;
     cout << "Total Nodes: " << formatNum(totalNodes) << endl;
     cout << "Total Time: " << formatTime(totalTimeMs) << endl;
-    int nps = INF_INT;
+    usize nps = 0;
     if (totalTimeMs > 0) {
-        nps = static_cast<u64>((totalNodes / totalTimeMs) * 1000);
+        nps = totalNodes / totalTimeMs * 1000;
         cout << "Average NPS: " << formatNum(nps) << endl;
     }
     cout << totalNodes << " nodes " << nps << " nps" << endl;
