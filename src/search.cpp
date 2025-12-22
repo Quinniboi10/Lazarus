@@ -109,7 +109,14 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         auto [newBoard, threadManager] = thisThread.makeMove(board, m);
         thisThread.nodes.fetch_add(1, std::memory_order_relaxed);
 
-        const i16 score = -search<isPV>(newBoard, depth - 1, ply + 1, -beta, -alpha, ss + 1, thisThread, tt, sl);
+        const i16 newDepth = depth - 1;
+
+        // Principal variation search (PVS)
+        i16 score = -INF_I16;
+        if (!isPV || movesSearched > 1)
+            score = -search<NONPV>(newBoard, newDepth, ply + 1, -alpha - 1, -alpha, ss + 1, thisThread, tt, sl);
+        if (isPV && (movesSearched == 1 || score > alpha))
+            score = -search<PV>(newBoard, newDepth, ply + 1, -beta, -alpha, ss + 1, thisThread, tt, sl);
 
         if (score > bestScore) {
             bestScore = score;
