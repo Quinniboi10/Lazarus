@@ -8,9 +8,6 @@
 #include <cstring>
 #include <thread>
 
-struct Searcher;
-
-namespace Search {
 struct ThreadInfo;
 struct ThreadStackManager;
 
@@ -82,7 +79,4 @@ inline bool isDecisive(const i16 score) {
     return isWin(score) || isLoss(score);
 }
 
-MoveEvaluation iterativeDeepening(Board board, ThreadInfo& thisThread, SearchParams sp, Searcher* searcher = nullptr);
-
 void bench();
-}

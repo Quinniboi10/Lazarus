@@ -8,8 +8,10 @@
 struct HistoryEntry {
     i32 value;
 
-    HistoryEntry() : value(0) {}
-    HistoryEntry(const i32 v) : value(v) {}
+    HistoryEntry() :
+        value(0) {}
+    HistoryEntry(const i32 v) :
+        value(v) {}
 
     operator i32() const {
         return value;
@@ -21,7 +23,6 @@ struct HistoryEntry {
     }
 };
 
-namespace Search {
 struct ThreadInfo {
     // History is indexed [stm][from][to]
     MultiArray<HistoryEntry, 2, 64, 64> history;
@@ -42,8 +43,12 @@ struct ThreadInfo {
     ThreadInfo(const ThreadInfo& other);
 
     // Accessors for the histories
-    HistoryEntry& getHistory(const Board& b, const Move m) { return history[b.stm][m.from()][m.to()]; }
-    const HistoryEntry& getHistory(const Board& b, const Move m) const { return history[b.stm][m.from()][m.to()]; }
+    HistoryEntry& getHistory(const Board& b, const Move m) {
+        return history[b.stm][m.from()][m.to()];
+    }
+    const HistoryEntry& getHistory(const Board& b, const Move m) const {
+        return history[b.stm][m.from()][m.to()];
+    }
 
     std::pair<Board, ThreadStackManager> makeMove(const Board& board, Move m);
 
@@ -65,4 +70,3 @@ struct ThreadStackManager {
         thisThread.accumulatorStack.pop();
     }
 };
-}

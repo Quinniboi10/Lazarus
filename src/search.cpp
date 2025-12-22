@@ -9,7 +9,6 @@
 
 #include <cmath>
 
-namespace Search {
 // Quiescence search
 template<NodeType isPV>
 i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo& thisThread) {
@@ -71,7 +70,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
     i16 bestScore = -INF_I16;
 
-    i16 movesSeen = 0;
+    i16 movesSeen     = 0;
     i16 movesSearched = 0;
 
     Movepicker<ALL_MOVES> picker(board, thisThread);
@@ -113,7 +112,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             }
         }
         if (score >= beta) {
-            const i32 historyBonus = ( HIST_BONUS_A * depth * depth + HIST_BONUS_B * depth + HIST_BONUS_C ) / 1024;
+            const i32 historyBonus = (HIST_BONUS_A * depth * depth + HIST_BONUS_B * depth + HIST_BONUS_C) / 1024;
             if (board.isQuiet(m))
                 thisThread.getHistory(board, m).update(historyBonus);
             break;
@@ -132,16 +131,15 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 }
 
 // This can't take a board as a reference because isLegal can change the current board state for a few dozen clock cycles
-MoveEvaluation iterativeDeepening(Board board, ThreadInfo& thisThread, SearchParams sp, Searcher* searcher) {
+MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
+    // In future this would be logic to pick the thread's data in SMP
+    ThreadInfo& thisThread = *threadData;
+
     thisThread.breakFlag.store(false);
     thisThread.nodes    = 0;
     thisThread.seldepth = 0;
     thisThread.refresh(board);
     const bool isMain = thisThread.type == ThreadType::MAIN;
-
-    // The main thread must be able to see the
-    // searcher to count all nodes
-    assert(!isMain || searcher != nullptr);
 
     i64 searchTime;
     if (sp.mtime)
@@ -189,8 +187,8 @@ MoveEvaluation iterativeDeepening(Board board, ThreadInfo& thisThread, SearchPar
         if (searchCancelled())
             break;
 
-        if (isMain)
-            searcher->searchReport(board, currDepth, score, ss->pv);
+        if (isMain && doReporting)
+            searchReport(board, currDepth, score, ss->pv);
 
         if (sp.softNodes > 0 && countNodes() > sp.softNodes)
             break;
@@ -209,7 +207,7 @@ MoveEvaluation iterativeDeepening(Board board, ThreadInfo& thisThread, SearchPar
         }
     }
 
-    if (isMain) {
+    if (isMain && doReporting) {
         cout << "info nodes " << countNodes() << endl;
         cout << "bestmove " << lastPV.moves[0] << endl;
     }
@@ -288,20 +286,20 @@ void bench() {
         board.loadFromFEN(fen);
 
         // Set up for iterative deepening
-        std::atomic<bool>                    benchBreakFlag(false);
-        auto                                 thisThread = std::make_unique<ThreadInfo>(ThreadType::SECONDARY, benchBreakFlag);
         Stopwatch<std::chrono::milliseconds> time;
 
-        // Start the iterative deepening search
-        Search::iterativeDeepening(board, *thisThread, Search::SearchParams(time, BENCH_DEPTH, 0, 0, 0, 0, 0, 0, 0, 0));
+        Searcher searcher(false);
+        searcher.reset();
+        searcher.start(board, SearchParams(time, BENCH_DEPTH, 0, 0, 0, 0, 0, 0, 0, 0));
+        searcher.waitUntilFinished();
 
-        u64 durationMs = time.elapsed();
+        const u64 durationMs = time.elapsed();
 
-        totalNodes += thisThread->nodes;
+        totalNodes += searcher.threadData->nodes;
         totalTimeMs += durationMs;
 
         cout << "FEN: " << fen << endl;
-        cout << "Nodes: " << formatNum(thisThread->nodes) << ", Time: " << formatTime(durationMs) << endl;
+        cout << "Nodes: " << formatNum(searcher.threadData->nodes) << ", Time: " << formatTime(durationMs) << endl;
         cout << "----------------------------------------" << endl;
     }
 
@@ -314,5 +312,4 @@ void bench() {
         cout << "Average NPS: " << formatNum(nps) << endl;
     }
     cout << totalNodes << " nodes " << nps << " nps" << endl;
-}
 }

@@ -290,7 +290,7 @@ void NNUE::showBuckets(const Board* board, const AccumulatorPair& accumulators) 
     }
 }
 
-i16 NNUE::evaluate(const Board& board, const Search::ThreadInfo& thisThread) const {
+i16 NNUE::evaluate(const Board& board, const ThreadInfo& thisThread) const {
 #ifndef NDEBUG
     AccumulatorPair verifAccumulator;
     verifAccumulator.resetAccumulators(board);
@@ -298,5 +298,5 @@ i16 NNUE::evaluate(const Board& board, const Search::ThreadInfo& thisThread) con
         board.display();
     assert(verifAccumulator == thisThread.accumulatorStack.top());
 #endif
-    return std::clamp(forwardPass(&board, thisThread.accumulatorStack.top()), static_cast<int>(Search::MATED_IN_MAX_PLY), static_cast<int>(Search::MATE_IN_MAX_PLY));
+    return std::clamp(forwardPass(&board, thisThread.accumulatorStack.top()), static_cast<int>(MATED_IN_MAX_PLY), static_cast<int>(MATE_IN_MAX_PLY));
 }

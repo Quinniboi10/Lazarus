@@ -4,17 +4,15 @@
 #include "types.h"
 #include "wdl.h"
 
-#include <algorithm>
-
-void Searcher::start(const Board& board, Search::SearchParams sp) {
+void Searcher::start(const Board& board, SearchParams sp) {
     if (!threadData)
-        threadData = std::make_unique<Search::ThreadInfo>(Search::ThreadType::MAIN, stopFlag);
+        threadData = std::make_unique<ThreadInfo>(ThreadType::MAIN, stopFlag);
 
     stopFlag.store(false, std::memory_order_release);
     threadData->reset();
 
     time   = sp.time;
-    thread = std::thread(Search::iterativeDeepening, board, std::ref(*threadData), sp, this);
+    thread = std::thread(&Searcher::iterativeDeepening, this, board, sp);
 }
 
 void Searcher::stop() {
@@ -24,7 +22,10 @@ void Searcher::stop() {
         thread.join();
 }
 
-void Searcher::waitUntilFinished() const {
+void Searcher::waitUntilFinished() {
+    if (thread.joinable())
+        thread.join();
+
     while (!stopFlag.load(std::memory_order_acquire)) {
         std::this_thread::yield();
     }
@@ -40,8 +41,8 @@ void Searcher::searchReport(const Board& board, const usize depth, const i32 sco
     fmt::print(" score ");
 
     // Don't report mate scores if it's from the TB
-    if (Search::isDecisive(score)) {
-        fmt::print("mate {}", std::copysign((Search::MATE_SCORE - std::abs(score)) / 2 + 1, score));
+    if (isDecisive(score)) {
+        fmt::print("mate {}", std::copysign((MATE_SCORE - std::abs(score)) / 2 + 1, score));
     }
     else
         fmt::print("cp {}", scaleEval(score, board));

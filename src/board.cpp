@@ -153,7 +153,7 @@ void Board::updateCheckPin() {
     const u64 rookChecks   = Movegen::getRookAttacks(kingSq, occ) & enemyRookQueens;
     const u64 bishopChecks = Movegen::getBishopAttacks(kingSq, occ) & enemyBishopQueens;
     u64       checks       = rookChecks | bishopChecks;
-    checkMask             = 0;  // If no checks, will be set to all 1s later.
+    checkMask              = 0;  // If no checks, will be set to all 1s later.
 
     // *** KNIGHT ATTACKS ***
     const u64 knightAttacks = Movegen::KNIGHT_ATTACKS[kingSq] & pieces(~stm, KNIGHT);
@@ -183,7 +183,7 @@ void Board::updateCheckPin() {
     const u64 rookXrays   = Movegen::getXrayRookAttacks(kingSq, occ, ourPieces) & enemyRookQueens;
     const u64 bishopXrays = Movegen::getXrayBishopAttacks(kingSq, occ, ourPieces) & enemyBishopQueens;
     u64       pinners     = rookXrays | bishopXrays;
-    pinnersPerC[stm]    = pinners;
+    pinnersPerC[stm]      = pinners;
 
     pinned = 0;
     while (pinners) {
@@ -508,8 +508,8 @@ void Board::move(const Move m) {
     zobrist ^= hashCastling();
     zobrist ^= EP_ZTABLE[epSquare];
 
-    epSquare            = NO_SQUARE;
-    fromNull            = false;
+    epSquare             = NO_SQUARE;
+    fromNull             = false;
     const Square    from = m.from();
     const Square    to   = m.to();
     const MoveType  mt   = m.typeOf();
@@ -518,7 +518,7 @@ void Board::move(const Move m) {
 
     removePiece(stm, pt, from);
     if (isCapture(m)) {
-        toPT           = getPiece(to);
+        toPT          = getPiece(to);
         halfMoveClock = 0;
         posHistory.clear();
         if (mt != EN_PASSANT) {
@@ -741,7 +741,7 @@ bool Board::isDraw() {
             || (pieces(BISHOP) & DARK_SQ_BB) == 0)       // OR no dark sq bishops
         && (pieces(BISHOP) == 0 || pieces(KNIGHT) == 0)  // Not bishop + knight
         && popcount(pieces(KNIGHT)) < 2)                 // Under 2 knights
-            return true;
+        return true;
 
     // Threefold
     u8 seen = 0;

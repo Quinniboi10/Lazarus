@@ -24,5 +24,5 @@ struct NNUE {
     int  forwardPass(const Board* board, const AccumulatorPair& accumulators) const;
     void showBuckets(const Board* board, const AccumulatorPair& accumulators) const;
 
-    i16 evaluate(const Board& board, const Search::ThreadInfo& thisThread) const;
+    i16 evaluate(const Board& board, const ThreadInfo& thisThread) const;
 };

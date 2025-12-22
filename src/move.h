@@ -14,7 +14,6 @@ class Move {
     // CAPTURE = 14
     // SPECIAL 1 = 13
     // SPECIAL 0 = 12
-   private:
     u16 move;
 
    public:

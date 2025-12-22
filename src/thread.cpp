@@ -1,15 +1,14 @@
 #include "thread.h"
 #include <tuple>
 
-namespace Search {
 ThreadInfo::ThreadInfo(const ThreadType type, std::atomic<bool>& breakFlag) :
     type(type),
     breakFlag(breakFlag) {
     breakFlag.store(false, std::memory_order_relaxed);
 
     deepFill(history, 0);
-    nodes     = 0;
-    seldepth  = 0;
+    nodes    = 0;
+    seldepth = 0;
 }
 ThreadInfo::ThreadInfo(const ThreadInfo& other) :
     history(other.history),
@@ -40,6 +39,4 @@ void ThreadInfo::refresh(const Board& b) {
 
 void ThreadInfo::reset() {
     deepFill(history, 0);
-}
-
 }

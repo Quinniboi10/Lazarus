@@ -8,22 +8,27 @@
 struct Searcher {
     std::atomic<bool>                    stopFlag;
     Stopwatch<std::chrono::milliseconds> time;
-    std::unique_ptr<Search::ThreadInfo>  threadData;
+    std::unique_ptr<ThreadInfo>          threadData;
     std::thread                          thread;
 
-    Searcher() {
+    bool doReporting;
+
+    Searcher(const bool doReporting) {
         stopFlag.store(true, std::memory_order_relaxed);
         time.reset();
-        threadData = std::make_unique<Search::ThreadInfo>(Search::ThreadType::MAIN, stopFlag);
+        threadData        = std::make_unique<ThreadInfo>(ThreadType::MAIN, stopFlag);
+        this->doReporting = doReporting;
     }
 
-    void start(const Board& board, Search::SearchParams sp);
+    void start(const Board& board, SearchParams sp);
     void stop();
-    void waitUntilFinished() const;
+    void waitUntilFinished();
 
     void reset() {
         threadData->reset();
     }
+
+    MoveEvaluation iterativeDeepening(Board board, SearchParams sp);
 
     void searchReport(const Board& board, usize depth, i32 score, const PvList& pv);
 };

@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 
     board.reset();
 
-    Searcher searcher;
+    Searcher searcher(true);
 
     const auto getValueFollowing = [&](const string& str, const string& value, const auto& defaultValue) {
         std::istringstream ss(str);
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
             args[i] = argv[i];
 
         if (args[1] == "bench")
-            Search::bench();
+            bench();
         else if (args[1] == "tune-config") {
 #ifdef TUNE
             printTuneOB();
@@ -169,7 +169,7 @@ int main(int argc, char* argv[]) {
                 maxNodes  = 0;
             }
 
-            searcher.start(board, Search::SearchParams(commandTime, depth, maxNodes, softNodes, mtime, wtime, btime, winc, binc, mate));
+            searcher.start(board, SearchParams(commandTime, depth, maxNodes, softNodes, mtime, wtime, btime, winc, binc, mate));
         }
         else if (tokens[0] == "setoption") {
             if (tokens[2] == "Move" && tokens[3] == "Overhead")
@@ -224,8 +224,6 @@ int main(int argc, char* argv[]) {
         else if (tokens[0] == "move") {
             board.move(Move(tokens[1], board));
         }
-        else if (command == "bench")
-            Search::bench();
         else if (command == "debug.eval") {
             searcher.threadData->refresh(board);
             cout << "Raw eval: " << nnue.forwardPass(&board, searcher.threadData->accumulatorStack.top()) << endl;
