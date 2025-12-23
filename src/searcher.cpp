@@ -8,10 +8,10 @@
 void Searcher::start(const Board& board, SearchParams sp) {
     searchLock.lock();
     this->currentBoard = board;
-    this->depth = 0;
-    this->seldepth = 0;
-    this->score = 0;
-    this->pv.length = 0;
+    this->depth        = 0;
+    this->seldepth     = 0;
+    this->score        = 0;
+    this->pv.length    = 0;
     this->moveHistory.clear();
     searchLock.unlock();
 

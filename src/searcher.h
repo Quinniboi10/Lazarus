@@ -15,12 +15,12 @@ struct Searcher {
     std::thread                          thread;
 
     // Atomic probes to get information from the search
-    std::mutex searchLock{};
-    Board currentBoard{};
-    usize depth{};
-    usize seldepth{};
-    i16 score{};
-    PvList pv{};
+    std::mutex                          searchLock{};
+    Board                               currentBoard{};
+    usize                               depth{};
+    usize                               seldepth{};
+    i16                                 score{};
+    PvList                              pv{};
     RollingWindow<std::pair<u64, Move>> moveHistory{ static_cast<usize>(std::max<int>(getTerminalRows() - 26, 1)) };
 
     bool doReporting;

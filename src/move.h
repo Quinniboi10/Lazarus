@@ -16,9 +16,9 @@ class Move {
     u16 move;
 
    public:
-    constexpr Move() = default;
+    constexpr Move()                  = default;
     constexpr Move(const Move& other) = default;
-    constexpr ~Move() = default;
+    constexpr ~Move()                 = default;
 
     constexpr Move(const u8 startSquare, const u8 endSquare, const MoveType flags = STANDARD_MOVE) {
         move = startSquare | flags;
@@ -75,7 +75,7 @@ struct MoveEvaluation {
     Move move;
     i16  eval;
 
-    MoveEvaluation() = default;
+    MoveEvaluation()                            = default;
     MoveEvaluation(const MoveEvaluation& other) = default;
     MoveEvaluation(const Move move, const i16 eval) {
         this->move = move;
@@ -88,9 +88,9 @@ struct PvList {
     array<Move, MAX_PLY> moves;
     u32                  length = 0;
 
-    PvList() = default;
+    PvList()                    = default;
     PvList(const PvList& other) = default;
-    ~PvList() = default;
+    ~PvList()                   = default;
 
     void update(const Move move, const PvList& child) {
         moves[0] = move;

@@ -14,9 +14,9 @@ struct ThreadStackManager;
 struct SearchStack {
     PvList pv{};
 
-    SearchStack() = default;
+    SearchStack()                         = default;
     SearchStack(const SearchStack& other) = default;
-    ~SearchStack() = default;
+    ~SearchStack()                        = default;
 };
 
 enum class ThreadType { MAIN = 1, SECONDARY = 0 };

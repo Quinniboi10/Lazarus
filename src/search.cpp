@@ -81,6 +81,19 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
     Transposition& ttEntry = tt.getEntry(board.zobrist);
     const bool     ttHit   = ttEntry.key == board.zobrist;
 
+    if (!isPV && ttHit && ttEntry.depth >= depth &&
+        (ttEntry.flag == EXACT                                      // Exact score
+         || (ttEntry.flag == BETA_CUTOFF && ttEntry.score >= beta)  // Lower bound, fail high
+         || (ttEntry.flag == FAIL_LOW && ttEntry.score <= alpha)    // Upper bound, fail low
+         )) {
+        const i32& ttScore = ttEntry.score;
+        if (isLoss(ttScore))
+            return ttScore + ply;
+        else if (isWin(ttScore))
+            return ttScore - ply;
+        return ttScore;
+    }
+
     Movepicker<ALL_MOVES> picker(board, thisThread, ttHit ? ttEntry.move : Move::null());
     while (picker.hasNext()) {
         // Check if the search has been aborted
@@ -186,7 +199,7 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
     SearchLimit mainSl(sp.time, searchTime, sp.nodes);
 
     // Create the search stack and clear it
-    auto   stack = std::vector<SearchStack>(MAX_PLY + 3);
+    auto         stack = std::vector<SearchStack>(MAX_PLY + 3);
     SearchStack* ss    = &stack[2];
 
     for (auto& ss : stack) {
@@ -235,10 +248,10 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
         // If depth 1 was searched, save its results
         if (currDepth == 1) {
             searchLock.lock();
-            this->depth = 1;
+            this->depth    = 1;
             this->seldepth = thisThread.seldepth;
-            this->score = score;
-            this->pv    = ss->pv;
+            this->score    = score;
+            this->pv       = ss->pv;
             this->moveHistory.push({ sp.time.elapsed(), ss->pv.moves[0] });
             searchLock.unlock();
         }
@@ -248,10 +261,10 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
             break;
 
         searchLock.lock();
-        this->depth = currDepth;
+        this->depth    = currDepth;
         this->seldepth = thisThread.seldepth;
-        this->score = score;
-        this->pv    = ss->pv;
+        this->score    = score;
+        this->pv       = ss->pv;
         if (currDepth > 1 && ss->pv.moves[0] != this->moveHistory.back().second)
             this->moveHistory.push({ sp.time.elapsed(), ss->pv.moves[0] });
         searchLock.unlock();
