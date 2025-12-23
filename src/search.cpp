@@ -49,7 +49,7 @@ i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo
 // Main search
 template<NodeType isPV>
 i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, SearchStack* ss, ThreadInfo& thisThread, TranspositionTable& tt, SearchLimit& sl) {
-    if (depth + ply > MAX_PLY)
+    if (depth + static_cast<i16>(ply) > static_cast<i16>(MAX_PLY))
         depth = MAX_PLY - ply;
     if constexpr (isPV)
         ss->pv.length = 0;
@@ -102,6 +102,18 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         const int rfpMargin = RFP_DEPTH_SCALAR * depth;
         if (ss->staticEval - rfpMargin >= beta && depth < 7)
             return ss->staticEval;
+
+
+        // Null move pruning
+        if (board.canNullMove() && ss->staticEval >= beta) {
+            const i16 reduction = NMP_DEPTH_REDUCTION;
+
+            auto [newBoard, threadManager] = thisThread.makeNullMove(board);
+            const i16 score                = -search<NONPV>(newBoard, depth - reduction, ply + 1, -beta, -beta + 1, ss + 1, thisThread, tt, sl);
+
+            if (score >= beta)
+                return score;
+        }
     }
 
     Movepicker<ALL_MOVES> picker(board, thisThread, ttHit ? ttEntry.move : Move::null());
@@ -253,7 +265,7 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
                 return thisThread.breakFlag.load(std::memory_order_relaxed) || (sp.softNodes > 0 && countNodes() > sp.softNodes);
         };
 
-        const i16 score = search<PV>(board, currDepth, 0, -INF_I16, INF_I16, ss, thisThread, transpositionTable, sl);
+        const i16 score = search<PV>(board, currDepth, 0, -MATE_SCORE, MATE_SCORE, ss, thisThread, transpositionTable, sl);
 
         // If depth 1 was searched, save its results
         if (currDepth == 1) {

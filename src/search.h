@@ -13,7 +13,7 @@ struct ThreadStackManager;
 
 struct SearchStack {
     PvList pv{};
-    i16 staticEval{};
+    i16    staticEval{};
 
     SearchStack()                         = default;
     SearchStack(const SearchStack& other) = default;
@@ -70,7 +70,7 @@ struct SearchLimit {
     }
 };
 
-constexpr i16 MATE_SCORE       = 32767;
+constexpr i16 MATE_SCORE       = 32500;
 constexpr i16 MATE_IN_MAX_PLY  = MATE_SCORE - MAX_PLY;
 constexpr i16 MATED_IN_MAX_PLY = -MATE_SCORE + static_cast<i32>(MAX_PLY);
 

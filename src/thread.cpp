@@ -29,6 +29,15 @@ std::pair<Board, ThreadStackManager> ThreadInfo::makeMove(const Board& board, co
     return { std::piecewise_construct, std::forward_as_tuple(std::move(newBoard)), std::forward_as_tuple(*this) };
 }
 
+std::pair<Board, ThreadStackManager> ThreadInfo::makeNullMove(const Board& board) {
+    Board newBoard = board;
+    newBoard.nullMove();
+
+    accumulatorStack.push(accumulatorStack.top());
+
+    return { std::piecewise_construct, std::forward_as_tuple(std::move(newBoard)), std::forward_as_tuple(*this) };
+}
+
 void ThreadInfo::refresh(const Board& b) {
     accumulatorStack.clear();
 

@@ -295,7 +295,7 @@ i16 NNUE::evaluate(const Board& board, const ThreadInfo& thisThread) const {
     AccumulatorPair verifAccumulator;
     verifAccumulator.resetAccumulators(board);
     if (verifAccumulator != thisThread.accumulatorStack.top())
-        board.display();
+        cout << board.toString() << endl;
     assert(verifAccumulator == thisThread.accumulatorStack.top());
 #endif
     return std::clamp(forwardPass(&board, thisThread.accumulatorStack.top()), static_cast<int>(MATED_IN_MAX_PLY), static_cast<int>(MATE_IN_MAX_PLY));
