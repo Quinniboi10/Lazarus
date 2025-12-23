@@ -90,3 +90,6 @@ Tunable(LMR_QUIET_CONST, 1456);    // Quantized by 1024
 Tunable(LMR_NOISY_CONST, 202);     // Quantized by 1024
 Tunable(LMR_QUIET_DIVISOR, 2835);  // Quantized by 1024
 Tunable(LMR_NOISY_DIVISOR, 3319);  // Quantized by 1024
+
+Tunable(FUTILITY_PRUNING_MARGIN, 100);
+Tunable(FUTILITY_PRUNING_SCALAR, 78);

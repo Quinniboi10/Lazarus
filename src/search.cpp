@@ -138,6 +138,8 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         }
     }
 
+    bool skipQuiets = false;
+
     Movepicker<ALL_MOVES> picker(board, thisThread, ttHit ? ttEntry.move : Move::null());
     while (picker.hasNext()) {
         // Check if the search has been aborted
@@ -157,9 +159,20 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         if (!board.isLegal(m))
             continue;
 
+        if (board.isQuiet(m) && skipQuiets)
+            continue;
+
         movesSeen++;
 
         // Moveloop pruning
+        if (ply > 0 && !isLoss(bestScore)) {
+            // Futility pruning
+            if (!board.inCheck() && depth < 6 && board.isQuiet(m) && ss->staticEval + FUTILITY_PRUNING_MARGIN + FUTILITY_PRUNING_SCALAR * depth < alpha) {
+                skipQuiets = true;
+                continue;
+            }
+
+        }
 
         movesSearched++;
 
