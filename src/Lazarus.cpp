@@ -110,6 +110,8 @@ int main(int argc, char* argv[]) {
         tokens = split(command, ' ');
 
         if (command == "uci") {
+            searcher.doUci = true;
+
             cout << "id name Lazarus"
 #ifdef GIT_HEAD_COMMIT_ID
                  << " (" << GIT_HEAD_COMMIT_ID << ")"
@@ -126,6 +128,11 @@ int main(int argc, char* argv[]) {
             printTuneUCI();
 #endif
             cout << "uciok" << endl;
+        }
+        else if (command == "icu") {
+            searcher.doUci = false;
+
+            cout << "koicu" << endl;
         }
         else if (command == "ucinewgame")
             searcher.reset();
@@ -156,8 +163,8 @@ int main(int argc, char* argv[]) {
             usize softNodes = std::stoi(getValueFollowing(command, "softnodes", 0));
 
             const usize mtime = std::stoi(getValueFollowing(command, "movetime", 0));
-            const i64 wtime = std::stoi(getValueFollowing(command, "wtime", 0));
-            const i64 btime = std::stoi(getValueFollowing(command, "btime", 0));
+            const i64   wtime = std::stoi(getValueFollowing(command, "wtime", 0));
+            const i64   btime = std::stoi(getValueFollowing(command, "btime", 0));
 
             const usize winc = std::stoi(getValueFollowing(command, "winc", 0));
             const usize binc = std::stoi(getValueFollowing(command, "binc", 0));
@@ -172,7 +179,9 @@ int main(int argc, char* argv[]) {
             searcher.start(board, SearchParams(commandTime, depth, maxNodes, softNodes, mtime, wtime, btime, winc, binc, mate));
         }
         else if (tokens[0] == "setoption") {
-            if (tokens[2] == "Move" && tokens[3] == "Overhead")
+            if (tokens[2] == "Hash")
+                searcher.resizeTT(std::stoull(getValueFollowing(command, "value", 16)));
+            else if (tokens[2] == "Move" && tokens[3] == "Overhead")
                 MOVE_OVERHEAD = std::stoi(tokens[findIndexOf(tokens, "value") + 1]);
             else if (tokens[2] == "EvalFile") {
                 const string value = tokens[findIndexOf(tokens, "value") + 1];
@@ -204,7 +213,7 @@ int main(int argc, char* argv[]) {
 
 
         else if (command == "d")
-            board.display();
+            cout << board.toString() << endl;
         else if (tokens[0] == "perft") {
             if (tokens.size() < 2) {
                 cout << "Usage: perft <depth>" << endl;

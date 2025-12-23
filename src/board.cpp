@@ -6,6 +6,8 @@
 #include "types.h"
 #include "util.h"
 
+#include "../external/fmt/fmt/color.h"
+
 #include <cassert>
 #include <random>
 
@@ -39,7 +41,7 @@ void Board::fillZobristTable() {
 }
 
 // Returns the piece on a square as a character
-char Board::getPieceAsStr(const Square sq) const {
+char Board::getPieceAsChar(const Square sq) const {
     if (getPiece(sq) == NO_PIECE_TYPE)
         return ' ';
     constexpr char whiteSymbols[] = { 'P', 'N', 'B', 'R', 'Q', 'K' };
@@ -413,7 +415,7 @@ string Board::fen() const {
         usize empty = 0;
         for (usize file = 0; file < 8; file++) {
             const Square sq = toSquare(static_cast<Rank>(rank), static_cast<File>(file));
-            const char   pc = getPieceAsStr(sq);
+            const char   pc = getPieceAsChar(sq);
             if (pc == ' ')
                 empty++;
             else {
@@ -458,27 +460,6 @@ string Board::fen() const {
     ss << ' ' << fullMoveClock;
 
     return ss.str();
-}
-
-// Print the board
-void Board::display() const {
-    cout << (stm ? "White's turn" : "Black's turn") << endl;
-
-    for (int rank = 7; rank >= 0; rank--) {
-        cout << "+---+---+---+---+---+---+---+---+" << endl;
-        for (int file = 0; file < 8; file++) {
-            const Square sq    = toSquare(static_cast<Rank>(rank), static_cast<File>(file));
-            const auto   color = ((1ULL << sq) & pieces(WHITE)) ? Colors::YELLOW : Colors::BLUE;
-            cout << "| " << color << getPieceAsStr(sq) << Colors::RESET << " ";
-        }
-        cout << "| " << rank + 1 << endl;
-    }
-    cout << "+---+---+---+---+---+---+---+---+" << endl;
-    cout << "  a   b   c   d   e   f   g   h" << endl << endl;
-    cout << endl;
-    cout << fen() << endl;
-    cout << endl;
-    cout << "Board hash: 0x" << std::hex << std::uppercase << zobrist << std::dec << endl;
 }
 
 // Return the type of the piece on the square
@@ -846,4 +827,51 @@ bool Board::see(const Move m, const int threshold) const {
     }
 
     return res;
+}
+
+// Print the board
+string Board::toString(const Move m) const {
+    std::ostringstream os;
+    const auto         printInfo = [&](const usize line) {
+        std::ostringstream ss;
+        if (line == 1)
+            ss << "FEN: " << fen();
+        else if (line == 2)
+            ss << "Hash: 0x" << std::hex << std::uppercase << zobrist << std::dec;
+        else if (line == 3)
+            ss << "Side to move: " << (stm == WHITE ? "WHITE" : "BLACK");
+        else if (line == 4)
+            ss << "En passant: " << (epSquare == NO_SQUARE ? "-" : squareToAlgebraic(epSquare));
+        return ss.str();
+    };
+
+    os << "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n";
+
+    const auto from = m.isNull() ? NO_SQUARE : m.from();
+    const auto to   = m.isNull() ? NO_SQUARE : m.to();
+
+    const auto fromColor = fmt::color::dim_gray;
+    const auto toColor   = isCapture(m) ? fmt::color::dark_red : fmt::color::dim_gray;
+
+    usize line = 1;
+    for (i32 rank = (stm == WHITE) * 7; (stm == WHITE) ? rank >= 0 : rank < 8; (stm == WHITE) ? rank-- : rank++) {
+        os << "\u2502 ";
+        for (i32 file = (stm != WHITE) * 7; (stm != WHITE) ? file >= 0 : file < 8; (stm != WHITE) ? file-- : file++) {
+            const auto sq      = static_cast<Square>(rank * 8 + file);
+            const auto fgColor = ((1ULL << sq) & pieces(WHITE)) ? fmt::color::orange : fmt::color::dark_blue;
+            const auto bgColor = sq == to ? toColor : fromColor;
+
+            if (from == sq || to == sq)
+                os << fmt::format(fmt::fg(fgColor) | fmt::bg(bgColor), "{}", getPieceAsChar(sq)) << " ";
+            else
+                os << fmt::format(fmt::fg(fgColor), "{}", getPieceAsChar(sq)) << " ";
+        }
+        os << "\u2502 " << rank + 1 << "    " << printInfo(line++) << "\n";
+    }
+    os << "\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n";
+    if (stm == WHITE)
+        os << "  a b c d e f g h\n";
+    else
+        os << "  h g f e d c b a\n";
+    return os.str();
 }

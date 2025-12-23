@@ -1,6 +1,5 @@
 #pragma once
 
-#include "accumulator.h"
 #include "move.h"
 #include "types.h"
 #include "util.h"
@@ -39,7 +38,7 @@ struct Board {
    private:
     bool fromNull;
 
-    char getPieceAsStr(Square sq) const;
+    char getPieceAsChar(Square sq) const;
 
     void placePiece(Color c, PieceType pt, Square sq);
     void removePiece(Color c, PieceType pt, Square sq);
@@ -83,8 +82,6 @@ struct Board {
     void   loadFromFEN(const string& fen);
     string fen() const;
 
-    void display() const;
-
     PieceType getPiece(Square sq) const;
     bool      isCapture(Move m) const;
     bool      isQuiet(Move m) const;
@@ -107,4 +104,6 @@ struct Board {
     bool isGameOver();
 
     bool see(Move m, int threshold) const;
+
+    string toString(Move m = Move::null()) const;
 };

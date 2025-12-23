@@ -1,5 +1,6 @@
 #pragma once
 
+#include "accumulator.h"
 #include "search.h"
 #include "types.h"
 

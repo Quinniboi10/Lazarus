@@ -12,7 +12,11 @@ struct ThreadInfo;
 struct ThreadStackManager;
 
 struct SearchStack {
-    PvList pv;
+    PvList pv{};
+
+    SearchStack() = default;
+    SearchStack(const SearchStack& other) = default;
+    ~SearchStack() = default;
 };
 
 enum class ThreadType { MAIN = 1, SECONDARY = 0 };

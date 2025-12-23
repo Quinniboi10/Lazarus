@@ -25,7 +25,7 @@ struct Movepicker {
         seen  = 0;
 
         for (usize i = 0; i < moves.length; i++) {
-            const Move m = moves.moves[i];
+            const Move m  = moves.moves[i];
             moveScores[i] = evaluateMove(board, thisThread, m) + 900'000 * (m == ttMove);
         }
     }

@@ -1,6 +1,7 @@
 #include "search.h"
 #include "config.h"
 #include "constants.h"
+#include "cursor.h"
 #include "globals.h"
 #include "movegen.h"
 #include "movepicker.h"
@@ -68,8 +69,8 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             return alpha;
     }
 
-    Move bestMove = Move::null();
-    i16 bestScore = -INF_I16;
+    Move bestMove  = Move::null();
+    i16  bestScore = -INF_I16;
 
     i16 movesSeen     = 0;
     i16 movesSearched = 0;
@@ -78,7 +79,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
     // TT probing
     Transposition& ttEntry = tt.getEntry(board.zobrist);
-    const bool ttHit = ttEntry.key == board.zobrist;
+    const bool     ttHit   = ttEntry.key == board.zobrist;
 
     Movepicker<ALL_MOVES> picker(board, thisThread, ttHit ? ttEntry.move : Move::null());
     while (picker.hasNext()) {
@@ -114,14 +115,14 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             bestScore = score;
             if (bestScore > alpha) {
                 bestMove = m;
-                ttFlag = EXACT;
-                alpha = bestScore;
+                ttFlag   = EXACT;
+                alpha    = bestScore;
                 if constexpr (isPV)
                     ss->pv.update(m, (ss + 1)->pv);
             }
         }
         if (score >= beta) {
-            ttFlag = BETA_CUTOFF;
+            ttFlag                 = BETA_CUTOFF;
             const i32 historyBonus = (HIST_BONUS_A * depth * depth + HIST_BONUS_B * depth + HIST_BONUS_C) / 1024;
             if (board.isQuiet(m))
                 thisThread.getHistory(board, m).update(historyBonus);
@@ -164,7 +165,7 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
 
     // Time management
     const i64 time = board.stm == WHITE ? sp.wtime : sp.btime;
-    const i64 inc = board.stm == WHITE ? sp.winc : sp.binc;
+    const i64 inc  = board.stm == WHITE ? sp.winc : sp.binc;
 
     i64 searchTime = sp.mtime ? sp.mtime : (time / 20 + inc / 2);
 
@@ -173,22 +174,46 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
 
     const i64 softTime = searchTime * 0.6;
 
+    // Create search limits, excluding time for depth 1
     SearchLimit depthOneSl(sp.time, 0, sp.nodes);
     SearchLimit mainSl(sp.time, searchTime, sp.nodes);
 
-    const auto   stack = std::make_unique<array<SearchStack, MAX_PLY + 3>>();
-    SearchStack* ss    = stack->data() + 2;
+    // Create the search stack and clear it
+    auto   stack = std::vector<SearchStack>(MAX_PLY + 3);
+    SearchStack* ss    = &stack[2];
 
-    std::memset(stack.get(), 0, sizeof(SearchStack) * (MAX_PLY + 3));
+    for (auto& ss : stack) {
+        ss = SearchStack();
+    }
 
-    const usize depth = std::min(sp.depth, MAX_PLY);
 
-    i16    lastScore{};
-    PvList lastPV{};
+    const usize searchDepth = std::min(sp.depth, MAX_PLY);
 
     auto countNodes = [&]() -> u64 { return thisThread.nodes; };
 
-    for (usize currDepth = 1; currDepth <= depth; currDepth++) {
+    // Pretty printing
+    const bool prettyPrint = isMain && doReporting && !doUci;
+
+    const auto runReportingThread = [](Searcher* searcher, const std::atomic<bool>& stopFlag) {
+        cursor::hide();
+        while (!stopFlag.load()) {
+            searcher->searchReport();
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+        searcher->searchReport();
+        cursor::show();
+    };
+
+    std::thread reportingThread;
+    if (prettyPrint)
+        reportingThread = std::thread(runReportingThread, this, std::ref(stopFlag));
+
+    if (prettyPrint) {
+        cursor::home();
+        cursor::clearAll();
+    }
+
+    for (usize currDepth = 1; currDepth <= searchDepth; currDepth++) {
         SearchLimit& sl = currDepth == 1 ? depthOneSl : mainSl;
 
         auto searchCancelled = [&]() {
@@ -200,44 +225,58 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
 
         const i16 score = search<PV>(board, currDepth, 0, -INF_I16, INF_I16, ss, thisThread, transpositionTable, sl);
 
+        // If depth 1 was searched, save its results
         if (currDepth == 1) {
-            lastScore = score;
-            lastPV    = ss->pv;
+            searchLock.lock();
+            this->depth = 1;
+            this->seldepth = thisThread.seldepth;
+            this->score = score;
+            this->pv    = ss->pv;
+            this->moveHistory.push({ sp.time.elapsed(), ss->pv.moves[0] });
+            searchLock.unlock();
         }
 
+        // If the search has been canceled, exit here to prevent saving partial data
         if (searchCancelled())
             break;
 
-        if (isMain && doReporting)
-            searchReport(board, currDepth, score, ss->pv);
+        searchLock.lock();
+        this->depth = currDepth;
+        this->seldepth = thisThread.seldepth;
+        this->score = score;
+        this->pv    = ss->pv;
+        if (currDepth > 1 && ss->pv.moves[0] != this->moveHistory.back().second)
+            this->moveHistory.push({ sp.time.elapsed(), ss->pv.moves[0] });
+        searchLock.unlock();
 
-        if (sp.softNodes > 0 && countNodes() > sp.softNodes)
-            break;
 
-        lastScore = score;
-        lastPV    = ss->pv;
+        if (isMain && doReporting && doUci)
+            reportUci();
 
         if (isMain) {
+            // Soft nodes
+            if (sp.softNodes > 0 && countNodes() > sp.softNodes)
+                break;
             // Go mate
             if (sp.mate > 0 && MATE_SCORE - std::abs(score) / 2 + 1 <= sp.mate)
                 break;
-
             // Soft TM
             if (softTime > 0 && static_cast<i64>(sp.time.elapsed()) >= softTime)
                 break;
         }
     }
 
-    if (isMain && doReporting) {
+    if (isMain && doReporting && doUci) {
         cout << "info nodes " << countNodes() << endl;
-        cout << "bestmove " << lastPV.moves[0] << endl;
+        cout << "bestmove " << this->pv.moves[0] << endl;
     }
 
     thisThread.breakFlag.store(true, std::memory_order_relaxed);
 
-    assert(lastPV.length > 0);
-    assert(!lastPV.moves[0].isNull());
-    return { lastPV.moves[0], lastScore };
+    if (reportingThread.joinable())
+        reportingThread.join();
+
+    return { this->pv.moves[0], this->score };
 }
 
 void bench() {

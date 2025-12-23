@@ -1,8 +1,12 @@
 #pragma once
 
+#include "move.h"
 #include "tunable.h"
+#include "types.h"
 
+#include "../external/fmt/fmt/color.h"
 
+#include <algorithm>
 #include <bit>
 #include <cassert>
 #include <cstring>
@@ -10,8 +14,15 @@
 #include <string_view>
 #include <vector>
 
-#include "../external/fmt/fmt/format.h"
-#include "types.h"
+#ifdef _WIN32
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
+    #include <windows.h>
+#else
+    #include <sys/ioctl.h>
+    #include <unistd.h>
+#endif
 
 inline bool readBit(const u64 bb, const usize idx) {
     return (1ULL << idx) & bb;
@@ -264,4 +275,131 @@ inline u64 parseSuffixedNum(string text) {
     const double value = std::stod(numeric);
 
     return std::round(value * multiplier);
+}
+
+inline int getTerminalRows() {
+    auto envLines = []() -> int {
+        if (const char* s = std::getenv("LINES")) {
+            char*      end = nullptr;
+            const long v   = std::strtol(s, &end, 10);
+            if (end != s && v > 0 && v < 100000)
+                return v;
+        }
+        return -1;
+    };
+
+#ifdef _WIN32
+    // Try the visible window height of the current console.
+    if (HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE); h != nullptr && h != INVALID_HANDLE_VALUE) {
+        CONSOLE_SCREEN_BUFFER_INFO csbi{};
+        if (GetConsoleScreenBufferInfo(h, &csbi)) {
+            int win_rows = static_cast<int>(csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+            if (win_rows > 0)
+                return win_rows;
+
+            if (csbi.dwSize.Y > 0)
+                return static_cast<int>(csbi.dwSize.Y);
+        }
+    }
+
+    int r = envLines();
+    return (r > 0) ? r : 24;
+
+#else
+    winsize ws{};
+
+    if (isatty(STDOUT_FILENO) && ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_row > 0)
+        return ws.ws_row;
+
+    if (isatty(STDIN_FILENO) && ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_row > 0)
+        return ws.ws_row;
+
+    const int r = envLines();
+    return (r > 0) ? r : 24;
+#endif
+}
+
+// Heat color
+inline void heatColor(float t, const string& text) {
+    t = std::clamp(t, 0.0f, 1.0f);
+    u8 r, g, b = 0;
+    if (t < 0.5f) {
+        const float ratio = t / 0.5f;
+        r                 = 255;
+        g                 = static_cast<u8>(ratio * 255);
+    }
+    else {
+        const float ratio = (t - 0.5f) / 0.5f;
+        r                 = static_cast<u8>(255 * (1.0f - ratio));
+        g                 = 255;
+    }
+
+    fmt::print(fmt::fg(fmt::rgb(r, g, b)), "{}", text);
+}
+
+// Colored progress bar
+inline void coloredProgBar(const usize length, const float fill) {
+    if (length == 0) {
+        fmt::print("[] 0%");
+        return;
+    }
+    fmt::print("[");
+    for (usize i = 0; i < length; ++i) {
+        const float percentage = static_cast<float>(i) / (length - 1);
+        if (percentage <= fill) {
+            heatColor(1 - percentage, "#");
+        }
+        else {
+            fmt::print(".");
+        }
+    }
+    fmt::print("] {}%", static_cast<usize>(fill * 100));
+}
+
+// Score color
+inline void printColoredScore(const i16 cp) {
+    const double wdl      = 2 / (1 + std::pow(std::numbers::e, -(cp / 400.0f))) - 1;
+    const double colorWdl = std::clamp(wdl * 1.5f, -1.0, 1.0);
+    u8           r, g, b;
+
+    const auto lerp = [](const double a, const double b, const double t) { return a + t * (b - a); };
+
+    if (colorWdl < 0) {
+        const double t = colorWdl + 1.0;
+        r              = static_cast<u8>(lerp(255, 255, t));  // red stays max
+        g              = static_cast<u8>(lerp(0, 255, t));    // green rises
+        b              = static_cast<u8>(lerp(0, 255, t));    // blue rises
+    }
+    else {
+        const double t = colorWdl;                            // maps 0 -> 1
+        r              = static_cast<u8>(lerp(255, 0, t));    // red drops
+        g              = static_cast<u8>(lerp(255, 255, t));  // green stays max
+        b              = static_cast<u8>(lerp(255, 0, t));    // blue drops
+    }
+
+    fmt::print(fmt::fg(fmt::rgb(r, g, b)), "{:.2f}", cp / 100.0f);
+}
+
+inline void printPV(const PvList& pv, const usize numToShow = 12, const u8 colorDecay = 10, const u8 minColor = 96) {
+    fmt::rgb color(255, 255, 255);
+
+    const usize endIdx = std::min<usize>(numToShow, pv.length);
+
+    for (usize idx = 0; idx < endIdx; idx++) {
+        fmt::print(fg(color), "{}", pv.moves[idx].toString());
+        if (idx != endIdx - 1)
+            fmt::print(" ");
+
+        color.r -= colorDecay;
+        color.g -= colorDecay;
+        color.b -= colorDecay;
+
+        color.r = std::max(color.r, minColor);
+        color.g = std::max(color.g, minColor);
+        color.b = std::max(color.b, minColor);
+    }
+
+    const usize remaining = pv.length - endIdx;
+    if (remaining > 0)
+        fmt::print(fg(color), " ({} remaining)", remaining);
 }

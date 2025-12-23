@@ -80,7 +80,7 @@ $(EVALFILE):
 endif
 
 # Files for make clean
-CLEAN_STUFF := $(EXE) Lazarus.exp Lazarus.lib Lazarus.pdb $(OBJS) $(DEPS) $(DEFAULT_NETWORK)
+CLEAN_STUFF := $(EXE) Lazarus.exp Lazarus.lib Lazarus.pdb $(OBJS) $(DEPS)
 ifeq ($(OS),Windows_NT)
     CLEAN_STUFF := $(subst /,\\,$(CLEAN_STUFF))
 endif

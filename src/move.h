@@ -4,7 +4,6 @@
 #include <cassert>
 
 #include "config.h"
-#include "types.h"
 
 struct Board;
 
@@ -17,7 +16,8 @@ class Move {
     u16 move;
 
    public:
-    constexpr Move()  = default;
+    constexpr Move() = default;
+    constexpr Move(const Move& other) = default;
     constexpr ~Move() = default;
 
     constexpr Move(const u8 startSquare, const u8 endSquare, const MoveType flags = STANDARD_MOVE) {
@@ -75,19 +75,22 @@ struct MoveEvaluation {
     Move move;
     i16  eval;
 
+    MoveEvaluation() = default;
+    MoveEvaluation(const MoveEvaluation& other) = default;
     MoveEvaluation(const Move move, const i16 eval) {
         this->move = move;
         this->eval = eval;
     }
+    ~MoveEvaluation() = default;
 };
 
 struct PvList {
     array<Move, MAX_PLY> moves;
-    u32                  length;
+    u32                  length = 0;
 
-    PvList() {
-        length = 0;
-    }
+    PvList() = default;
+    PvList(const PvList& other) = default;
+    ~PvList() = default;
 
     void update(const Move move, const PvList& child) {
         moves[0] = move;
@@ -121,11 +124,9 @@ struct PvList {
 
 struct MoveList {
     array<Move, 256> moves;
-    usize            length;
+    usize            length = 0;
 
-    constexpr MoveList() {
-        length = 0;
-    }
+    MoveList() = default;
 
     void add(const Move m) {
         assert(length < 256);
