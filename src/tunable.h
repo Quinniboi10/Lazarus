@@ -85,3 +85,8 @@ Tunable(INC_DIVISOR, 2156);           // Quantized by 1024
 constexpr i16 NMP_DEPTH_REDUCTION = 4;
 
 Tunable(RFP_DEPTH_SCALAR, 66);
+
+Tunable(LMR_QUIET_CONST, 1456);    // Quantized by 1024
+Tunable(LMR_NOISY_CONST, 202);     // Quantized by 1024
+Tunable(LMR_QUIET_DIVISOR, 2835);  // Quantized by 1024
+Tunable(LMR_NOISY_DIVISOR, 3319);  // Quantized by 1024
