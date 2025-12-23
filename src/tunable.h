@@ -80,3 +80,6 @@ Tunable(HIST_BONUS_C, 1024);   // Quantized by 1024
 // Time management
 Tunable(DEFAULT_MOVES_TO_GO, 19018);  // Quantized by 1024
 Tunable(INC_DIVISOR, 2156);           // Quantized by 1024
+
+// Main search
+Tunable(RFP_DEPTH_SCALAR, 66);

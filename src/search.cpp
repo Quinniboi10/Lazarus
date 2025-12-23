@@ -94,6 +94,16 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         return ttScore;
     }
 
+    ss->staticEval = nnue.evaluate(board, thisThread);
+
+    // Pre-moveloop pruning
+    if (!isPV && ply > 0 && !board.inCheck()) {
+        // Reverse futility pruning
+        const int rfpMargin = RFP_DEPTH_SCALAR * depth;
+        if (ss->staticEval - rfpMargin >= beta && depth < 7)
+            return ss->staticEval;
+    }
+
     Movepicker<ALL_MOVES> picker(board, thisThread, ttHit ? ttEntry.move : Move::null());
     while (picker.hasNext()) {
         // Check if the search has been aborted

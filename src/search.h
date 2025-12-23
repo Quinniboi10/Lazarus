@@ -13,6 +13,7 @@ struct ThreadStackManager;
 
 struct SearchStack {
     PvList pv{};
+    i16 staticEval{};
 
     SearchStack()                         = default;
     SearchStack(const SearchStack& other) = default;
