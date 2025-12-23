@@ -10,6 +10,28 @@
 
 #include <cmath>
 
+const auto lmrTable = []() {
+    MultiArray<int, 2, MAX_PLY + 1, 219> lmrTable;
+    for (int isQuiet = 0; isQuiet <= 1; isQuiet++) {
+        for (usize depth = 0; depth <= MAX_PLY; depth++) {
+            for (int movesSeen = 0; movesSeen <= 218; movesSeen++) {
+                // Calculate reduction factor for late move reduction
+                // Based on Weiss's formulas
+                int& depthReduction = lmrTable[isQuiet][depth][movesSeen];
+                if (depth == 0 || movesSeen == 0) {
+                    depthReduction = 0;
+                    continue;
+                }
+                if (isQuiet)
+                    depthReduction = LMR_QUIET_CONST + std::log(depth) * std::log(movesSeen) / LMR_QUIET_DIVISOR;
+                else
+                    depthReduction = LMR_NOISY_CONST + std::log(depth) * std::log(movesSeen) / LMR_NOISY_DIVISOR;
+            }
+        }
+    }
+    return lmrTable;
+}();
+
 // Quiescence search
 template<NodeType isPV>
 i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo& thisThread) {
@@ -148,7 +170,16 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
         // Principal variation search (PVS)
         i16 score = -INF_I16;
-        if (!isPV || movesSearched > 1)
+        if (depth >= 2 && movesSearched >= 5 + 2 * (ply == 0) && !newBoard.inCheck()) {
+            // Late move reduction (LMR)
+            const i16 depthReduction = lmrTable[board.isQuiet(m)][depth][movesSearched];
+
+            score = -search<NONPV>(newBoard, newDepth - depthReduction / 1024, ply + 1, -alpha - 1, -alpha, ss + 1, thisThread, tt, sl);
+
+            if (score > alpha)
+                score = -search<NONPV>(newBoard, newDepth, ply + 1, -alpha - 1, -alpha, ss + 1, thisThread, tt, sl);
+        }
+        else if (!isPV || movesSearched > 1)
             score = -search<NONPV>(newBoard, newDepth, ply + 1, -alpha - 1, -alpha, ss + 1, thisThread, tt, sl);
         if (isPV && (movesSearched == 1 || score > alpha))
             score = -search<PV>(newBoard, newDepth, ply + 1, -beta, -alpha, ss + 1, thisThread, tt, sl);
