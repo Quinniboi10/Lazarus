@@ -27,6 +27,7 @@ struct HistoryEntry {
 struct ThreadInfo {
     // History is indexed [stm][from][to]
     MultiArray<HistoryEntry, 2, 64, 64> history;
+    MultiArray<Move, MAX_PLY, 2>        killers;
 
     // All the accumulators for each thread's search
     Stack<AccumulatorPair, MAX_PLY + 1> accumulatorStack;
@@ -49,6 +50,20 @@ struct ThreadInfo {
     }
     const HistoryEntry& getHistory(const Board& b, const Move m) const {
         return history[b.stm][m.from()][m.to()];
+    }
+
+    void updateKillers(usize ply, const Move m) {
+        if (killers[ply][0] != m) {
+            killers[ply][1] = killers[ply][0];
+            killers[ply][0] = m;
+        }
+    }
+
+    void clearKillers() {
+        for (usize i = 0; i < MAX_PLY; i++) {
+            killers[i][0] = Move::null();
+            killers[i][1] = Move::null();
+        }
     }
 
     std::pair<Board, ThreadStackManager> makeMove(const Board& board, Move m);

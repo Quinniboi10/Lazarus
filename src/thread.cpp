@@ -7,11 +7,13 @@ ThreadInfo::ThreadInfo(const ThreadType type, std::atomic<bool>& breakFlag) :
     breakFlag.store(false, std::memory_order_relaxed);
 
     deepFill(history, 0);
+    clearKillers();
     nodes    = 0;
     seldepth = 0;
 }
 ThreadInfo::ThreadInfo(const ThreadInfo& other) :
     history(other.history),
+    killers(other.killers),
     accumulatorStack(other.accumulatorStack),
     type(other.type),
     breakFlag(other.breakFlag),
@@ -48,4 +50,5 @@ void ThreadInfo::refresh(const Board& b) {
 
 void ThreadInfo::reset() {
     deepFill(history, 0);
+    clearKillers();
 }

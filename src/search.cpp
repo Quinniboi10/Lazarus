@@ -45,6 +45,7 @@ i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo
     if (bestScore > alpha)
         alpha = bestScore;
 
+    thisThread.seldepth = ply;
     Movepicker<NOISY_ONLY> picker(board, thisThread, Move::null());
     while (picker.hasNext()) {
         const Move m = picker.getNext();
@@ -68,15 +69,29 @@ i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo
 
     return bestScore;
 }
-// Main search
+// This is the main search function, which uses a variety of techniques to
+// efficiently search the game tree. These techniques include:
+// - Principal Variation Search (PVS)
+// - Quiescence Search
+// - Transposition Table (TT)
+// - Killer Moves
+// - History Heuristic
+// - Check Extensions
+// - Null Move Pruning (NMP)
+// - Late Move Reductions (LMR)
+// - Futility Pruning
+// - Reverse Futility Pruning (RFP)
+// - SEE Pruning
+// - Singular Extensions
 template<NodeType isPV>
 i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, SearchStack* ss, ThreadInfo& thisThread, TranspositionTable& tt, SearchLimit& sl) {
     if (depth + static_cast<i16>(ply) > static_cast<i16>(MAX_PLY))
         depth = MAX_PLY - ply;
     if constexpr (isPV)
         ss->pv.length = 0;
-    if (ply > thisThread.seldepth)
-        thisThread.seldepth = ply;
+
+    thisThread.seldepth = ply;
+
     if (board.isDraw() && ply > 0)
         return 0;
     if (depth <= 0)
@@ -208,6 +223,9 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         auto [newBoard, threadManager] = thisThread.makeMove(board, m);
         thisThread.nodes.fetch_add(1, std::memory_order_relaxed);
 
+        if (newBoard.inCheck())
+            extension++;
+
         const i16 newDepth = depth - 1 + extension;
 
         // Principal variation search (PVS)
@@ -238,6 +256,10 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         }
         if (score >= beta) {
             ttFlag = BETA_CUTOFF;
+
+            // Update killers
+            if (board.isQuiet(m))
+                thisThread.updateKillers(ply, m);
 
             // Update histories
             const i32 historyBonus = (HIST_BONUS_A * depth * depth + HIST_BONUS_B * depth + HIST_BONUS_C) / 1024;
