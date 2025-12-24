@@ -173,6 +173,11 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
                 skipQuiets = true;
                 continue;
             }
+
+            // SEE pruning
+            const i32 seeThreshold = board.isQuiet(m) ? -SEE_QUIET_SCALAR * depth * depth : -SEE_NOISY_SCALAR * depth;
+            if (!board.see(m, seeThreshold))
+                continue;
         }
 
         movesSearched++;
