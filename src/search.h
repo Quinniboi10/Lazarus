@@ -13,6 +13,7 @@ struct ThreadStackManager;
 
 struct SearchStack {
     PvList pv{};
+    Move   excluded = Move::null();
     i16    staticEval{};
 
     SearchStack()                         = default;

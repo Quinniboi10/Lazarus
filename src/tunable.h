@@ -83,6 +83,7 @@ Tunable(INC_DIVISOR, 2156);           // Quantized by 1024
 
 // Main search
 constexpr i16 NMP_DEPTH_REDUCTION = 4;
+constexpr i32 SE_MIN_DEPTH = 8;
 
 Tunable(RFP_DEPTH_SCALAR, 66);
 

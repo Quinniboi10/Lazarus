@@ -101,7 +101,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
     // TT probing
     Transposition& ttEntry = tt.getEntry(board.zobrist);
-    const bool     ttHit   = ttEntry.key == board.zobrist;
+    const bool     ttHit   = ss->excluded.isNull() && ttEntry.key == board.zobrist;
 
     if (!isPV && ttHit && ttEntry.depth >= depth &&
         (ttEntry.flag == EXACT                                      // Exact score
@@ -119,7 +119,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
     ss->staticEval = nnue.evaluate(board, thisThread);
 
     // Pre-moveloop pruning
-    if (!isPV && ply > 0 && !board.inCheck()) {
+    if (!isPV && ply > 0 && !board.inCheck() && !isLoss(beta) && ss->excluded.isNull()) {
         // Reverse futility pruning
         const int rfpMargin = RFP_DEPTH_SCALAR * depth;
         if (ss->staticEval - rfpMargin >= beta && depth < 7)
@@ -158,6 +158,9 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
         const Move m = picker.getNext();
 
+        if (m == ss->excluded)
+            continue;
+
         if (!board.isLegal(m))
             continue;
 
@@ -182,10 +185,24 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
         movesSearched++;
 
+        i32 extension = 0;
+        // Singular extensions
+        if (ply > 0 && depth >= SE_MIN_DEPTH && ttHit && m == ttEntry.move && ttEntry.depth >= depth - 3 && ttEntry.flag != FAIL_LOW) {
+            const i32 sBeta  = std::max(-INF_INT + 1, ttEntry.score - depth * 2);
+            const i32 sDepth = (depth - 1) / 2;
+
+            ss->excluded    = m;
+            const i32 score = search<NONPV>(board, sDepth, ply, sBeta - 1, sBeta, ss, thisThread, tt, sl);
+            ss->excluded    = Move::null();
+
+            if (score < sBeta)
+                extension = 1;
+        }
+
         auto [newBoard, threadManager] = thisThread.makeMove(board, m);
         thisThread.nodes.fetch_add(1, std::memory_order_relaxed);
 
-        const i16 newDepth = depth - 1;
+        const i16 newDepth = depth - 1 + extension;
 
         // Principal variation search (PVS)
         i16 score = -INF_I16;
@@ -247,10 +264,12 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
     else if (isWin(bestScore))
         ttScore = bestScore + static_cast<i16>(ply);
 
-    const Transposition newEntry(board.zobrist, bestMove, ttFlag, ttScore, depth);
+    if (ss->excluded.isNull()) {
+        const Transposition newEntry(board.zobrist, bestMove, ttFlag, ttScore, depth);
 
-    if (tt.shouldReplace(ttEntry, newEntry))
-        ttEntry = newEntry;
+        if (tt.shouldReplace(ttEntry, newEntry))
+            ttEntry = newEntry;
+    }
 
     return bestScore;
 }
