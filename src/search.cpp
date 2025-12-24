@@ -118,10 +118,13 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
     ss->staticEval = nnue.evaluate(board, thisThread);
 
+    // Has the current position improving since last time stm played
+    const bool improving = ss->staticEval > (ss - 2)->staticEval;
+
     // Pre-moveloop pruning
     if (!isPV && ply > 0 && !board.inCheck() && !isLoss(beta) && ss->excluded.isNull()) {
         // Reverse futility pruning
-        const int rfpMargin = RFP_DEPTH_SCALAR * depth;
+        const int rfpMargin = RFP_DEPTH_SCALAR * (depth - improving);
         if (ss->staticEval - rfpMargin >= beta && depth < 7)
             return ss->staticEval;
 
