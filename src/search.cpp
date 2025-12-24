@@ -171,8 +171,11 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
                 skipQuiets = true;
                 continue;
             }
-
         }
+
+        // Internal iterative reductions (IIR)
+        if ((ttEntry.key != board.zobrist || ttEntry.move.isNull()) && depth > 5)
+            depth--;
 
         movesSearched++;
 
