@@ -71,6 +71,7 @@ Tunable(QUEEN_VALUE, 800);
 
 // Move ordering
 Tunable(MO_VICTIM_SCALAR, 100);
+Tunable(MO_CAPTURE_SEE_THRESHOLD, 56);
 
 // Histories
 Tunable(HIST_BONUS_A, 21504);  // Quantized by 1024

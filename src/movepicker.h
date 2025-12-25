@@ -9,7 +9,7 @@ inline int evaluateMove(const Board& board, const ThreadInfo& thisThread, const 
     const Square from = m.from();
     const Square to   = m.to();
     if (board.isCapture(m))
-        return 500'000 + getPieceValue(board.getPiece(to)) * MO_VICTIM_SCALAR - getPieceValue(board.getPiece(from));
+        return (board.see(m, -MO_CAPTURE_SEE_THRESHOLD) ? 500'000 : -200'000) + getPieceValue(board.getPiece(to)) * MO_VICTIM_SCALAR - getPieceValue(board.getPiece(from));
 
     return thisThread.getHistory(board, m);
 }
