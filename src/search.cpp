@@ -128,6 +128,9 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         if (ss->staticEval - rfpMargin >= beta && depth < 7)
             return ss->staticEval;
 
+        // Razoring
+        if (depth < RAZORING_DEPTH && ss->staticEval + RAZORING_DEPTH_SCALAR * depth < alpha)
+            return ss->staticEval;
 
         // Null move pruning
         if (board.canNullMove() && ss->staticEval >= beta) {
