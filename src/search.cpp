@@ -34,10 +34,19 @@ const auto lmrTable = []() {
 
 // Quiescence search
 template<NodeType isPV>
-i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo& thisThread) {
+i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo& thisThread, TranspositionTable& tt) {
     const i16 staticEval = nnue.evaluate(board, thisThread);
     if (ply >= MAX_PLY)
         return staticEval;
+
+    const Transposition& ttEntry = tt.getEntry(board.zobrist);
+
+    if (!isPV && ttEntry.key == board.zobrist
+        && (ttEntry.flag == EXACT                                       // Exact score
+            || (ttEntry.flag == BETA_CUTOFF && ttEntry.score >= beta)  // Lower bound, fail high
+            || (ttEntry.flag == FAIL_LOW && ttEntry.score <= alpha)    // Upper bound, fail low
+            ))
+        return ttEntry.score;
 
     i16 bestScore = staticEval;
     if (bestScore >= beta)
@@ -55,7 +64,7 @@ i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo
         auto [newBoard, threadManager] = thisThread.makeMove(board, m);
         thisThread.nodes.fetch_add(1, std::memory_order_relaxed);
 
-        const i16 score = -qsearch<isPV>(newBoard, ply + 1, -beta, -alpha, thisThread);
+        const i16 score = -qsearch<isPV>(newBoard, ply + 1, -beta, -alpha, thisThread, tt);
 
         if (score >= beta)
             return score;
@@ -80,7 +89,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
     if (board.isDraw() && ply > 0)
         return 0;
     if (depth <= 0)
-        return qsearch<isPV>(board, ply, alpha, beta, thisThread);
+        return qsearch<isPV>(board, ply, alpha, beta, thisThread, tt);
 
     // Mate distance pruning
     if (ply > 0) {
