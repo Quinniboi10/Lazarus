@@ -83,14 +83,16 @@ Tunable(INC_DIVISOR, 2156);           // Quantized by 1024
 
 // Main search
 constexpr i16 NMP_DEPTH_REDUCTION = 4;
-constexpr i32 SE_MIN_DEPTH = 8;
+constexpr i32 SE_MIN_DEPTH        = 8;
 
 Tunable(RFP_DEPTH_SCALAR, 66);
 
-Tunable(LMR_QUIET_CONST, 1456);    // Quantized by 1024
-Tunable(LMR_NOISY_CONST, 202);     // Quantized by 1024
-Tunable(LMR_QUIET_DIVISOR, 2835);  // Quantized by 1024
-Tunable(LMR_NOISY_DIVISOR, 3319);  // Quantized by 1024
+// Quantized by 1024
+Tunable(LMR_QUIET_CONST, 1456);
+Tunable(LMR_NOISY_CONST, 202);
+Tunable(LMR_QUIET_DIVISOR, 2835);
+Tunable(LMR_NOISY_DIVISOR, 3319);
+Tunable(LMR_NONPV, 1046);
 
 Tunable(FUTILITY_PRUNING_MARGIN, 100);
 Tunable(FUTILITY_PRUNING_SCALAR, 78);
