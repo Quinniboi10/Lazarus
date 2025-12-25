@@ -34,7 +34,7 @@ struct Movepicker {
         usize best      = seen;
         int   bestScore = moveScores[seen];
 
-        for (usize i = seen; i < moves.length; i++) {
+        for (usize i = seen + 1; i < moves.length; i++) {
             if (moveScores[i] > bestScore) {
                 best      = i;
                 bestScore = moveScores[i];

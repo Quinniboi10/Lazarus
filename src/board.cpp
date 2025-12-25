@@ -526,24 +526,14 @@ void Board::move(const Move m) {
     case CASTLE:
         assert(getPiece(to) == ROOK);
         removePiece(stm, ROOK, to);
-        if (stm == WHITE) {
-            if (from < to) {
-                placePiece(stm, KING, g1);
-                placePiece(stm, ROOK, f1);
-            }
-            else {
-                placePiece(stm, KING, c1);
-                placePiece(stm, ROOK, d1);
-            }
-        }
-        else {
-            if (from < to) {
-                placePiece(stm, KING, g8);
-                placePiece(stm, ROOK, f8);
-            }
-            else {
-                placePiece(stm, KING, c8);
-                placePiece(stm, ROOK, d8);
+        {
+            const Rank r = rankOf(from);
+            if (from < to) { // Kingside
+                placePiece(stm, KING, toSquare(r, GFILE));
+                placePiece(stm, ROOK, toSquare(r, FFILE));
+            } else { // Queenside
+                placePiece(stm, KING, toSquare(r, CFILE));
+                placePiece(stm, ROOK, toSquare(r, DFILE));
             }
         }
         break;
@@ -630,8 +620,9 @@ bool Board::isLegal(const Move m) {
         if (pinned & (1ULL << m.to()))
             return false;
 
-        const Square kingEndSq = toSquare(stm == WHITE ? RANK1 : RANK8, kingside ? GFILE : CFILE);
-        const Square rookEndSq = toSquare(stm == WHITE ? RANK1 : RANK8, kingside ? FFILE : DFILE);
+        const Rank r = rankOf(m.from());
+        const Square kingEndSq = toSquare(r, kingside ? GFILE : CFILE);
+        const Square rookEndSq = toSquare(r, kingside ? FFILE : DFILE);
 
         u64 betweenBB = (LINESEG[m.from()][kingEndSq] | LINESEG[m.to()][rookEndSq]) ^ (1ULL << m.from()) ^ (1ULL << m.to());
 
