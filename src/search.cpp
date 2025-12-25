@@ -200,6 +200,8 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
             if (score < sBeta)
                 extension = 1;
+            else if (sBeta >= beta)
+                return sBeta;
             // Negative extensions
             else if (ttEntry.score >= beta)
                 extension = -2;
