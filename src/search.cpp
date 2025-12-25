@@ -172,6 +172,9 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
         movesSeen++;
 
+        // TT prefetching
+        tt.prefetch(board.roughKeyAfter(m));
+
         // Moveloop pruning
         if (ply > 0 && !isLoss(bestScore)) {
             // Futility pruning
