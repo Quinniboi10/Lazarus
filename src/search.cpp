@@ -214,7 +214,8 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         i16 score = -INF_I16;
         if (depth >= 2 && movesSearched >= 5 + 2 * (ply == 0) && !newBoard.inCheck()) {
             // Late move reduction (LMR)
-            const i16 depthReduction = lmrTable[board.isQuiet(m)][depth][movesSearched];
+            const i16 depthReduction = lmrTable[board.isQuiet(m)][depth][movesSearched]
+                                     + !isPV * LMR_NONPV;
 
             score = -search<NONPV>(newBoard, newDepth - depthReduction / 1024, ply + 1, -alpha - 1, -alpha, ss + 1, thisThread, tt, sl);
 
