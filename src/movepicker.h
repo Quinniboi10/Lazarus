@@ -9,7 +9,9 @@ inline int evaluateMove(const Board& board, const ThreadInfo& thisThread, const 
     const Square from = m.from();
     const Square to   = m.to();
     if (board.isCapture(m))
-        return (board.see(m, -MO_CAPTURE_SEE_THRESHOLD) ? 500'000 : -200'000) + getPieceValue(board.getPiece(to)) * MO_VICTIM_SCALAR - getPieceValue(board.getPiece(from));
+        return (board.see(m, -MO_CAPTURE_SEE_THRESHOLD) ? 500'000 : -200'000)       // Constant bonus for captures
+             + getPieceValue(board.getPiece(to)) * MO_VICTIM_SCALAR                 // Prioritize capturing stronger pieces
+             + thisThread.getCaptureHistory(board, m) * MO_CAPTHIST_WEIGHT / 1024;  // Probe the capture history
 
     return thisThread.getHistory(board, m);
 }
