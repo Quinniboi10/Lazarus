@@ -28,6 +28,9 @@ struct ThreadInfo {
     // History is indexed [stm][from][to]
     MultiArray<HistoryEntry, 2, 64, 64> history;
 
+    // Capthist is indexed [stm][pt][captured pt][to]
+    MultiArray<HistoryEntry, 2, 6, 6, 64> capthist;
+
     // All the accumulators for each thread's search
     Stack<AccumulatorPair, MAX_PLY + 1> accumulatorStack;
 
@@ -49,6 +52,12 @@ struct ThreadInfo {
     }
     const HistoryEntry& getHistory(const Board& b, const Move m) const {
         return history[b.stm][m.from()][m.to()];
+    }
+    HistoryEntry& getCaptureHistory(const Board& b, const Move m) {
+        return capthist[b.stm][b.getPiece(m.from())][b.getPiece(m.to())][m.to()];
+    }
+    const HistoryEntry& getCaptureHistory(const Board& b, const Move m) const {
+        return capthist[b.stm][b.getPiece(m.from())][b.getPiece(m.to())][m.to()];
     }
 
     std::pair<Board, ThreadStackManager> makeMove(const Board& board, Move m);

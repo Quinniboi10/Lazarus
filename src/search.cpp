@@ -144,6 +144,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
     bool skipQuiets = false;
 
     MoveList badQuiets{};
+    MoveList badNoisies{};
 
     Movepicker<ALL_MOVES> picker(board, thisThread, ttHit ? ttEntry.move : Move::null());
     while (picker.hasNext()) {
@@ -247,8 +248,12 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             const i32 historyBonus = (HIST_BONUS_A * depth * depth + HIST_BONUS_B * depth + HIST_BONUS_C) / 1024;
             if (board.isQuiet(m))
                 thisThread.getHistory(board, m).update(historyBonus);
+            else
+                thisThread.getCaptureHistory(board, m).update(historyBonus);
             for (const Move badQuiet : badQuiets)
                 thisThread.getHistory(board, badQuiet).update(-historyBonus);
+            for (const Move badNoisy : badNoisies)
+                thisThread.getCaptureHistory(board, badNoisy).update(-historyBonus);
 
             break;
         }
@@ -256,6 +261,8 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         if (bestMove != m) {
             if (board.isQuiet(m))
                 badQuiets.add(m);
+            else
+                badNoisies.add(m);
         }
     }
 
