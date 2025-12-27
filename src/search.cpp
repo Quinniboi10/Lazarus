@@ -128,7 +128,6 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         if (ss->staticEval - rfpMargin >= beta && depth < 7)
             return ss->staticEval;
 
-
         // Null move pruning
         if (board.canNullMove() && ss->staticEval >= beta) {
             const i16 reduction = NMP_DEPTH_REDUCTION;
@@ -202,8 +201,12 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             const i32 score = search<NONPV>(board, sDepth, ply, sBeta - 1, sBeta, ss, thisThread, tt, sl);
             ss->excluded    = Move::null();
 
-            if (score < sBeta)
-                extension = 1;
+            if (score < sBeta) {
+                if (!isPV && score < sBeta - SE_DOUBLE_MARGIN)
+                    extension = 2;
+                else
+                    extension = 1;
+            }
             // Negative extensions
             else if (ttEntry.score >= beta)
                 extension = -2;
