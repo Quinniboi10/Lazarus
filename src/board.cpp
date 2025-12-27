@@ -528,10 +528,11 @@ void Board::move(const Move m) {
         removePiece(stm, ROOK, to);
         {
             const Rank r = rankOf(from);
-            if (from < to) { // Kingside
+            if (from < to) {  // Kingside
                 placePiece(stm, KING, toSquare(r, GFILE));
                 placePiece(stm, ROOK, toSquare(r, FFILE));
-            } else { // Queenside
+            }
+            else {  // Queenside
                 placePiece(stm, KING, toSquare(r, CFILE));
                 placePiece(stm, ROOK, toSquare(r, DFILE));
             }
@@ -620,7 +621,7 @@ bool Board::isLegal(const Move m) {
         if (pinned & (1ULL << m.to()))
             return false;
 
-        const Rank r = rankOf(m.from());
+        const Rank   r         = rankOf(m.from());
         const Square kingEndSq = toSquare(r, kingside ? GFILE : CFILE);
         const Square rookEndSq = toSquare(r, kingside ? FFILE : DFILE);
 
