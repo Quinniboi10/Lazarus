@@ -89,6 +89,8 @@ constexpr i32 SE_MIN_DEPTH        = 8;
 
 Tunable(RFP_DEPTH_SCALAR, 66);
 
+Tunable(SE_DOUBLE_MARGIN, 30);
+
 // Quantized by 1024
 Tunable(LMR_QUIET_CONST, 1456);
 Tunable(LMR_NOISY_CONST, 202);
