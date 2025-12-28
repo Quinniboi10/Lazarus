@@ -54,6 +54,9 @@ i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo
         if (!board.isLegal(m))
             continue;
 
+        if (!board.see(m, 0))
+            continue;
+
         if (!board.inCheck() && board.isCapture(m) && futilityScore <= alpha && !board.see(m, 1)) {
             bestScore = std::max(bestScore, futilityScore);
             continue;
