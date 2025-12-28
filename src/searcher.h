@@ -12,7 +12,7 @@ struct Searcher {
     std::atomic<bool>                    stopFlag;
     Stopwatch<std::chrono::milliseconds> time;
     std::unique_ptr<ThreadInfo>          threadData;
-    std::thread                          thread;
+    std::jthread                         thread;
 
     // Atomic probes to get information from the search
     std::mutex                          searchLock{};
@@ -57,5 +57,5 @@ struct Searcher {
     MoveEvaluation iterativeDeepening(Board board, SearchParams sp);
 
     void reportUci();
-    void searchReport();
+    void reportPrettyPrint();
 };

@@ -357,7 +357,7 @@ inline void coloredProgBar(const usize length, const float fill) {
 }
 
 // Score color
-inline void printColoredScore(const i16 cp) {
+inline string getColoredScore(const int cp) {
     const double wdl      = 2 / (1 + std::pow(std::numbers::e, -(cp / 400.0f))) - 1;
     const double colorWdl = std::clamp(wdl * 1.5f, -1.0, 1.0);
     u8           r, g, b;
@@ -377,18 +377,19 @@ inline void printColoredScore(const i16 cp) {
         b              = static_cast<u8>(lerp(255, 0, t));    // blue drops
     }
 
-    fmt::print(fmt::fg(fmt::rgb(r, g, b)), "{:.2f}", cp / 100.0f);
+    return fmt::format(fmt::fg(fmt::rgb(r, g, b)), "{:+.2f}", cp / 100.0f);
 }
 
-inline void printPV(const PvList& pv, const usize numToShow = 12, const u8 colorDecay = 10, const u8 minColor = 96) {
+inline string getPrettyPV(const PvList& pv, const usize numToShow = 12, const u8 colorDecay = 10, const u8 minColor = 96) {
+    std::ostringstream oss;
     fmt::rgb color(255, 255, 255);
 
     const usize endIdx = std::min<usize>(numToShow, pv.length);
 
     for (usize idx = 0; idx < endIdx; idx++) {
-        fmt::print(fg(color), "{}", pv.moves[idx].toString());
+        oss << fmt::format(fg(color), "{}", pv.moves[idx].toString());
         if (idx != endIdx - 1)
-            fmt::print(" ");
+            oss << " ";
 
         color.r -= colorDecay;
         color.g -= colorDecay;
@@ -401,5 +402,7 @@ inline void printPV(const PvList& pv, const usize numToShow = 12, const u8 color
 
     const usize remaining = pv.length - endIdx;
     if (remaining > 0)
-        fmt::print(fg(color), " ({} remaining)", remaining);
+        oss << fmt::format(fg(color), " ({} remaining)", remaining);
+
+    return oss.str();
 }

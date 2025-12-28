@@ -22,7 +22,7 @@ void Searcher::start(const Board& board, SearchParams sp) {
     threadData->reset();
 
     time   = sp.time;
-    thread = std::thread(&Searcher::iterativeDeepening, this, board, sp);
+    thread = std::jthread(&Searcher::iterativeDeepening, this, board, sp);
 }
 
 void Searcher::stop() {
@@ -65,55 +65,35 @@ void Searcher::reportUci() {
     searchLock.unlock();
 }
 
-void Searcher::searchReport() {
+void Searcher::reportPrettyPrint() {
     searchLock.lock();
+
+    cursor::cache();
     cursor::home();
+    cout << currentBoard.toString(pv.moves[0]);
+    cursor::load();
 
-    const auto printStat = [&](const string& label, const auto& value, const string& suffix = "") { cout << Colors::GREY << label << Colors::WHITE << value << suffix << "   \n"; };
+    // Depth
+    fmt::print(fmt::fg(fmt::color::light_gray) | fmt::emphasis::bold, " {:<8} ", fmt::format("{}/{}", depth, seldepth));
 
-    const auto printBar = [&](const string& label, const float progress) {
-        cout << Colors::GREY << label << Colors::WHITE;
-        coloredProgBar(50, progress);
-        cout << "  \n";
-    };
+    // Time
+    fmt::print(fmt::fg(fmt::color::gray), "{:>10}    ", formatTime(time.elapsed()));
 
-    const u64 elapsedMs = std::max<u64>(time.elapsed(), 1);
+    // Nodes
+    fmt::print(fmt::fg(fmt::color::gray), "{:>20}    ", fmt::format("{} nodes", formatNum(threadData->nodes)));
 
-    cout << currentBoard.toString(pv.moves[0]) << "\n";
+    // Speed
+    fmt::print(fmt::fg(fmt::color::gray), "{:>12}    ", fmt::format("{} knps", formatNum(threadData->nodes / (time.elapsed() + 1))));
 
-    printStat(" TT Size:      ", (transpositionTable.size + 1) * sizeof(Transposition) / 1024 / 1024, "MiB");
-    printBar(" TT Usage:     ", transpositionTable.hashfull() / 1000.0f);
-    cout << "\n";
+    // TT
+    fmt::print(fmt::fg(fmt::rgb(105, 200, 215)), "TT: ");
+    fmt::print(fmt::fg(fmt::color::gray), "{:>4}    ", fmt::format("{}%", transpositionTable.hashfull() / 10));
 
-    printStat(" Nodes:            ", suffixNum(threadData->nodes));
-    printStat(" Time:             ", formatTime(elapsedMs));
-    printStat(" Nodes per second: ", suffixNum(threadData->nodes * 1000 / elapsedMs));
-    cout << "\n";
+    // Score
+    fmt::print(fmt::fg(fmt::color::gray), "{:>12}    ", getColoredScore(scaleEval(score, currentBoard)));
 
-    printStat(" Depth:     ", depth);
-    printStat(" Max depth: ", seldepth);
-
-    cout << endl;
-
-    cursor::clear();
-    cout << Colors::GREY << " Score:   ";
-    if (isDecisive(score))
-        fmt::print(fmt::fg(score > 0 ? fmt::rgb(0, 255, 0) : fmt::rgb(255, 0, 0)), "M {}", std::copysign((MATE_SCORE - std::abs(score)) / 2 + 1, score));
-    else
-        printColoredScore(score);
-
-    cout << endl;
-
-    cursor::clear();
-    cout << Colors::GREY << " PV line: ";
-    printPV(pv);
-    cout << "\n";
-
-    cout << "\n";
-    cout << " Best move history:" << "\n";
-    for (const auto& m : moveHistory) {
-        cout << "    " << Colors::GREY << formatTime(m.first) << Colors::WHITE << " -> " << m.second << "     \n";
-    }
+    // PV
+    fmt::print("{}", getPrettyPV(pv));
 
     cout << endl;
     searchLock.unlock();

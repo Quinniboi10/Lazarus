@@ -330,31 +330,16 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
         ss = SearchStack();
     }
 
-
     const usize searchDepth = std::min(sp.depth, MAX_PLY);
 
     auto countNodes = [&]() -> u64 { return thisThread.nodes; };
 
     // Pretty printing
-    const bool prettyPrint = isMain && doReporting && !doUci;
-
-    const auto runReportingThread = [](Searcher* searcher, const std::atomic<bool>& stopFlag) {
-        cursor::hide();
-        while (!stopFlag.load()) {
-            searcher->searchReport();
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
-        searcher->searchReport();
-        cursor::show();
-    };
-
-    std::thread reportingThread;
-    if (prettyPrint)
-        reportingThread = std::thread(runReportingThread, this, std::ref(stopFlag));
-
-    if (prettyPrint) {
+    if (isMain && doReporting && !doUci) {
         cursor::home();
         cursor::clearAll();
+
+        cout << currentBoard.toString() << "\n" << endl;
     }
 
     for (usize currDepth = 1; currDepth <= searchDepth; currDepth++) {
@@ -394,8 +379,12 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
         searchLock.unlock();
 
 
-        if (isMain && doReporting && doUci)
-            reportUci();
+        if (isMain && doReporting) {
+            if (doUci)
+                reportUci();
+            else
+                reportPrettyPrint();
+        }
 
         if (isMain) {
             // Soft nodes
@@ -416,9 +405,6 @@ MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
     }
 
     thisThread.breakFlag.store(true, std::memory_order_relaxed);
-
-    if (reportingThread.joinable())
-        reportingThread.join();
 
     return { this->pv.moves[0], this->score };
 }

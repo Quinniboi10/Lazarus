@@ -34,4 +34,10 @@ static void hide(std::ostream& out = std::cout) {
 static void show(std::ostream& out = std::cout) {
     out << "\033[?25h";
 }
+static void cache(std::ostream& out = std::cout) {
+    out << "\033[s";
+}
+static void load(std::ostream& out = std::cout) {
+    out << "\033[u";
+}
 }
