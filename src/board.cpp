@@ -16,8 +16,8 @@ const auto [PIECE_ZTABLE, EP_ZTABLE, STM_ZHASH, CASTLING_ZTABLE] = []() {
     std::mt19937_64 engine(69420);
 
     MultiArray<u64, 2, 6, 64> pieceTable;
-    array<u64, 65> epTable;
-    array<u64, 16> castlingTable;
+    array<u64, 65>            epTable;
+    array<u64, 16>            castlingTable;
 
     // Fill Piece Table
     for (auto& stm : pieceTable)
