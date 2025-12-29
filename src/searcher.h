@@ -9,8 +9,8 @@
 struct Searcher {
     TranspositionTable transpositionTable;
 
-    std::atomic<bool>         killFlag;
-    std::atomic<bool>         stopFlag;
+    std::atomic<bool> killFlag;
+    alignas(64) std::atomic<bool> stopFlag;
     std::vector<std::jthread> workers{};
     std::vector<ThreadData>   threadData{};
 

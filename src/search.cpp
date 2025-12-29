@@ -293,7 +293,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
     else if (isWin(bestScore))
         ttScore = bestScore + static_cast<i16>(ply);
 
-    if (ss->excluded.isNull()) {
+    if (ss->excluded.isNull() && !thisThread.breakFlag.load(std::memory_order_relaxed)) {
         const Transposition newEntry(board.zobrist, bestMove, ttFlag, ttScore, depth);
 
         if (tt.shouldReplace(ttEntry, newEntry))
