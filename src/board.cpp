@@ -11,34 +11,35 @@
 #include <cassert>
 #include <random>
 
-// Piece zobrist table
-MultiArray<u64, 2, 6, 64> PIECE_ZTABLE;
-// En passant zobrist table
-array<u64, 65> EP_ZTABLE;
-// Zobrist for stm
-u64 STM_ZHASH;
-// Zobrist for castling rights
-array<u64, 16> CASTLING_ZTABLE;
+const auto [PIECE_ZTABLE, EP_ZTABLE, STM_ZHASH, CASTLING_ZTABLE] = []() {
+    // Initialize the generator
+    std::mt19937_64 engine(69420);
 
-void Board::fillZobristTable() {
-    std::mt19937_64                    engine(69420);
-    std::uniform_int_distribution<u64> dist(0, ~0ULL);
+    MultiArray<u64, 2, 6, 64> pieceTable;
+    array<u64, 65> epTable;
+    array<u64, 16> castlingTable;
 
-    for (auto& stm : PIECE_ZTABLE)
+    // Fill Piece Table
+    for (auto& stm : pieceTable)
         for (auto& pt : stm)
-            for (auto& piece : pt)
-                piece = dist(engine);
+            for (u64& piece : pt)
+                piece = engine();
 
-    for (auto& ep : EP_ZTABLE)
-        ep = dist(engine);
+    // Fill EP Table
+    for (u64& ep : epTable)
+        ep = engine();
 
-    STM_ZHASH = dist(engine);
+    epTable[NO_SQUARE] = 0;
 
-    for (auto& right : CASTLING_ZTABLE)
-        right = dist(engine);
+    // Fill STM Hash
+    u64 stmHash = engine();
 
-    EP_ZTABLE[NO_SQUARE] = 0;
-}
+    // Fill Castling Table
+    for (u64& right : castlingTable)
+        right = engine();
+
+    return std::make_tuple(pieceTable, epTable, stmHash, castlingTable);
+}();
 
 // Returns the piece on a square as a character
 char Board::getPieceAsChar(const Square sq) const {

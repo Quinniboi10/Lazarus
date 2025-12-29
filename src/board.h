@@ -58,8 +58,6 @@ struct Board {
    public:
     Board() = default;
 
-    static void fillZobristTable();
-
     constexpr Square castleSq(const Color c, const bool kingside) const {
         return castling[castleIndex(c, kingside)];
     }

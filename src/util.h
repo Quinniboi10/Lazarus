@@ -382,7 +382,7 @@ inline string getColoredScore(const int cp) {
 
 inline string getPrettyPV(const PvList& pv, const usize numToShow = 12, const u8 colorDecay = 10, const u8 minColor = 96) {
     std::ostringstream oss;
-    fmt::rgb color(255, 255, 255);
+    fmt::rgb           color(255, 255, 255);
 
     const usize endIdx = std::min<usize>(numToShow, pv.length);
 

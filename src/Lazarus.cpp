@@ -35,12 +35,12 @@ INCBIN(EVAL, EVALFILE);
 
 NNUE nnue;
 bool chess960          = false;
-i32  syzygyDepth       = 1;
-i32  syzygyProbeLimit  = 32;
 bool nodesAreSoftNodes = false;
 
 // ****** MAIN ENTRY POINT, HANDLES UCI ******
-int main(int argc, char* argv[]) {
+int main(const int argc, char* argv[]) {
+    Movegen::initializeAllDatabases();
+
     auto loadDefaultNet = [&]([[maybe_unused]] bool warnMSVC = false) {
 #if defined(_MSC_VER) && !defined(__clang__) && defined(EVALFILE)
         nnue.loadNetwork(EVALFILE);
@@ -54,12 +54,7 @@ int main(int argc, char* argv[]) {
     loadDefaultNet(true);
 
     Board board;
-
-    string              command;
-    std::vector<string> tokens;
-
-    Movegen::initializeAllDatabases();
-    Board::fillZobristTable();
+    string command;
 
     board.reset();
 
@@ -107,7 +102,7 @@ int main(int argc, char* argv[]) {
         const Stopwatch<std::chrono::milliseconds> commandTime;
         if (command.empty())
             continue;
-        tokens = split(command, ' ');
+        const std::vector<string> tokens = split(command, ' ');
 
         if (command == "uci") {
             searcher.doUci = true;
