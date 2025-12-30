@@ -304,7 +304,6 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 }
 
 MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board) {
-    thisThread.breakFlag.store(false);
     thisThread.nodes    = 0;
     thisThread.seldepth = 0;
     thisThread.refresh(board);
@@ -351,8 +350,7 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board)
         auto searchCancelled = [&]() {
             if (thisThread.type == ThreadType::MAIN)
                 return sl.outOfNodes(countNodes()) || sl.outOfTime() || thisThread.breakFlag.load(std::memory_order_relaxed);
-            else
-                return thisThread.breakFlag.load(std::memory_order_relaxed) || (sp.softNodes > 0 && countNodes() > sp.softNodes);
+            return thisThread.breakFlag.load(std::memory_order_relaxed) || (sp.softNodes > 0 && countNodes() > sp.softNodes);
         };
 
         const i16 score = search<PV>(board, currDepth, 0, -MATE_SCORE, MATE_SCORE, ss, thisThread, transpositionTable, sl);
@@ -397,12 +395,13 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board)
         }
     }
 
-    if (isMain && doReporting && doUci) {
-        cout << "info nodes " << countNodes() << endl;
-        cout << "bestmove " << this->pv.moves[0] << endl;
+    if (isMain) {
+        if (doReporting && doUci) {
+            cout << "info nodes " << countNodes() << endl;
+            cout << "bestmove " << this->pv.moves[0] << endl;
+        }
+        stop();
     }
-
-    thisThread.breakFlag.store(true, std::memory_order_relaxed);
 
     return { this->pv.moves[0], this->score };
 }
