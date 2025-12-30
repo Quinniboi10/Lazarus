@@ -5,7 +5,20 @@
 #include "types.h"
 #include "wdl.h"
 
-void Searcher::start(const Board& board, SearchParams sp) {
+// Every worker will run this loop
+void Searcher::runWorker(ThreadData& thisThread) {
+    while (!killFlag.load(std::memory_order_relaxed)) {
+        while (stopFlag.load(std::memory_order_relaxed)) {
+            if (killFlag.load(std::memory_order_relaxed))
+                return;
+            std::this_thread::yield();
+        }
+        iterativeDeepening(thisThread, currentBoard);
+    }
+}
+
+void Searcher::start(const Board& board, const SearchParams& newParams) {
+    this->sp = newParams;
     searchLock.lock();
     this->currentBoard = board;
     this->depth        = 0;
@@ -15,39 +28,26 @@ void Searcher::start(const Board& board, SearchParams sp) {
     this->moveHistory.clear();
     searchLock.unlock();
 
-    if (!threadData)
-        threadData = std::make_unique<ThreadInfo>(ThreadType::MAIN, stopFlag);
-
     stopFlag.store(false, std::memory_order_release);
-    threadData->reset();
-
-    time   = sp.time;
-    thread = std::jthread(&Searcher::iterativeDeepening, this, board, sp);
 }
 
 void Searcher::stop() {
     stopFlag.store(true, std::memory_order_relaxed);
-
-    if (thread.joinable())
-        thread.join();
 }
 
-void Searcher::waitUntilFinished() {
-    if (thread.joinable())
-        thread.join();
-
-    while (!stopFlag.load(std::memory_order_acquire)) {
+void Searcher::waitUntilFinished() const {
+    while (!stopFlag.load(std::memory_order_relaxed))
         std::this_thread::yield();
-    }
 }
 
 void Searcher::reportUci() {
-    searchLock.lock();
-    u64 nodes = threadData->nodes;
+    u64 nodes = 0;
+    for (const ThreadData& t : threadData)
+        nodes += t.nodes.load(std::memory_order_relaxed);
 
-    fmt::print("info depth {} seldepth {} time {} nodes {} hashfull {}", depth, threadData->seldepth, time.elapsed(), nodes, transpositionTable.hashfull());
-    if (time.elapsed() > 0)
-        fmt::print(" nps {}", nodes * 1000 / time.elapsed());
+    searchLock.lock();
+
+    fmt::print("info depth {} seldepth {} time {} nodes {} nps {} hashfull {}", depth, threadData[0].seldepth, sp.time.elapsed(), nodes, nodes * 1000 / (sp.time.elapsed() + 1), transpositionTable.hashfull());
 
     fmt::print(" score ");
 
@@ -66,6 +66,10 @@ void Searcher::reportUci() {
 }
 
 void Searcher::reportPrettyPrint() {
+    u64 nodes = 0;
+    for (const ThreadData& t : threadData)
+        nodes += t.nodes.load(std::memory_order_relaxed);
+
     searchLock.lock();
 
     cursor::cache();
@@ -77,13 +81,13 @@ void Searcher::reportPrettyPrint() {
     fmt::print(fmt::fg(fmt::color::light_gray) | fmt::emphasis::bold, " {:<8} ", fmt::format("{}/{}", depth, seldepth));
 
     // Time
-    fmt::print(fmt::fg(fmt::color::gray), "{:>10}    ", formatTime(time.elapsed()));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>10}    ", formatTime(sp.time.elapsed()));
 
     // Nodes
-    fmt::print(fmt::fg(fmt::color::gray), "{:>20}    ", fmt::format("{} nodes", formatNum(threadData->nodes)));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>20}    ", fmt::format("{} nodes", formatNum(nodes)));
 
     // Speed
-    fmt::print(fmt::fg(fmt::color::gray), "{:>12}    ", fmt::format("{} knps", formatNum(threadData->nodes / (time.elapsed() + 1))));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>12}    ", fmt::format("{} knps", formatNum(nodes / (sp.time.elapsed() + 1))));
 
     // TT
     fmt::print(fmt::fg(fmt::rgb(105, 200, 215)), "TT: ");

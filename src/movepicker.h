@@ -5,7 +5,7 @@
 #include "tunable.h"
 #include "types.h"
 
-inline int evaluateMove(const Board& board, const ThreadInfo& thisThread, const Move m) {
+inline int evaluateMove(const Board& board, const ThreadData& thisThread, const Move m) {
     const Square from = m.from();
     const Square to   = m.to();
     if (board.isCapture(m))
@@ -22,7 +22,7 @@ struct Movepicker {
     array<int, 256> moveScores;
     u16             seen;
 
-    Movepicker(const Board& board, const ThreadInfo& thisThread, const Move ttMove) {
+    Movepicker(const Board& board, const ThreadData& thisThread, const Move ttMove) {
         moves = Movegen::generateMoves<mode>(board);
         seen  = 0;
 

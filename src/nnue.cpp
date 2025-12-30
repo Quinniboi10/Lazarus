@@ -290,7 +290,7 @@ void NNUE::showBuckets(const Board* board, const AccumulatorPair& accumulators) 
     }
 }
 
-i16 NNUE::evaluate(const Board& board, const ThreadInfo& thisThread) const {
+i16 NNUE::evaluate(const Board& board, const ThreadData& thisThread) const {
 #ifndef NDEBUG
     AccumulatorPair verifAccumulator;
     verifAccumulator.resetAccumulators(board);

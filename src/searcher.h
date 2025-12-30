@@ -9,12 +9,14 @@
 struct Searcher {
     TranspositionTable transpositionTable;
 
-    std::atomic<bool>                    stopFlag;
-    Stopwatch<std::chrono::milliseconds> time;
-    std::unique_ptr<ThreadInfo>          threadData;
-    std::jthread                         thread;
+    std::atomic<bool> killFlag;
+    alignas(64) std::atomic<bool> stopFlag;
+    std::vector<std::jthread> workers{};
+    std::vector<ThreadData>   threadData{};
 
-    // Atomic probes to get information from the search
+    SearchParams sp;
+
+    // Thread-safe probes to get information from the search
     std::mutex                          searchLock{};
     Board                               currentBoard{};
     usize                               depth{};
@@ -28,33 +30,64 @@ struct Searcher {
     // Dictates if uci/pretty printing should be used, false by default
     bool doUci;
 
-    explicit Searcher(const bool doReporting, const bool doUci = false) {
+   private:
+    void killAllThreads() {
         stopFlag.store(true, std::memory_order_relaxed);
-        time.reset();
+        killFlag.store(true, std::memory_order_relaxed);
+        for (auto& w : workers)
+            if (w.joinable())
+                w.join();
 
-        threadData        = std::make_unique<ThreadInfo>(ThreadType::MAIN, stopFlag);
+        workers.clear();
+        threadData.clear();
+        killFlag.store(false, std::memory_order_relaxed);
+    }
+
+   public:
+    explicit Searcher(const bool doReporting, const bool doUci = false) {
+        killFlag.store(false, std::memory_order_relaxed);
+        stopFlag.store(true, std::memory_order_relaxed);
+
+        setThreads(1);
+
         this->doReporting = doReporting;
         this->doUci       = doUci;
 
         reset();
     }
 
-    void start(const Board& board, SearchParams sp);
+    ~Searcher() {
+        killAllThreads();
+    }
+
+    void runWorker(ThreadData& thisThread);
+
+    void start(const Board& board, const SearchParams& sp);
     void stop();
-    void waitUntilFinished();
+    void waitUntilFinished() const;
 
     void resizeTT(const u64 newSizeMiB) {
-        fmt::println("Trying for {} MiB", newSizeMiB);
         transpositionTable.reserve(newSizeMiB);
         transpositionTable.clear();
     }
+    void setThreads(const usize newThreads) {
+        killAllThreads();
+        threadData.emplace_back(ThreadType::MAIN, stopFlag);
+
+        for (usize i = 1; i < newThreads; i++)
+            threadData.emplace_back(ThreadType::SECONDARY, stopFlag);
+
+        for (usize i = 0; i < newThreads; i++)
+            workers.emplace_back(&Searcher::runWorker, this, std::ref(threadData[i]));
+    }
 
     void reset() {
-        threadData->reset();
+        for (auto& t : threadData)
+            t.reset();
         transpositionTable.clear();
     }
 
-    MoveEvaluation iterativeDeepening(Board board, SearchParams sp);
+    MoveEvaluation iterativeDeepening(ThreadData& thisThread, Board board);
 
     void reportUci();
     void reportPrettyPrint();
