@@ -5,18 +5,6 @@
 #include "types.h"
 #include "wdl.h"
 
-// Every worker will run this loop
-void Searcher::runWorker(ThreadData& thisThread) {
-    while (!killFlag.load(std::memory_order_relaxed)) {
-        while (stopFlag.load(std::memory_order_relaxed)) {
-            if (killFlag.load(std::memory_order_relaxed))
-                return;
-            std::this_thread::yield();
-        }
-        iterativeDeepening(thisThread, currentBoard);
-    }
-}
-
 void Searcher::start(const Board& board, const SearchParams& newParams) {
     this->sp = newParams;
     searchLock.lock();
@@ -29,6 +17,9 @@ void Searcher::start(const Board& board, const SearchParams& newParams) {
     searchLock.unlock();
 
     stopFlag.store(false, std::memory_order_release);
+
+    for (ThreadData& t : this->threadData)
+        threads->enqueue([&]() { iterativeDeepening(t, currentBoard); });
 }
 
 void Searcher::stop() {

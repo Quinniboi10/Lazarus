@@ -3,16 +3,14 @@
 #include "search.h"
 #include "thread.h"
 #include "ttable.h"
-
-#include <thread>
+#include "threadpool.h"
 
 struct Searcher {
     TranspositionTable transpositionTable;
 
-    std::atomic<bool> killFlag;
     alignas(64) std::atomic<bool> stopFlag;
-    std::vector<std::jthread> workers{};
-    std::vector<ThreadData>   threadData{};
+    std::vector<ThreadData> threadData{};
+    std::unique_ptr<ThreadPool> threads;
 
     SearchParams sp;
 
@@ -30,22 +28,7 @@ struct Searcher {
     // Dictates if uci/pretty printing should be used, false by default
     bool doUci;
 
-   private:
-    void killAllThreads() {
-        stopFlag.store(true, std::memory_order_relaxed);
-        killFlag.store(true, std::memory_order_relaxed);
-        for (auto& w : workers)
-            if (w.joinable())
-                w.join();
-
-        workers.clear();
-        threadData.clear();
-        killFlag.store(false, std::memory_order_relaxed);
-    }
-
-   public:
     explicit Searcher(const bool doReporting, const bool doUci = false) {
-        killFlag.store(false, std::memory_order_relaxed);
         stopFlag.store(true, std::memory_order_relaxed);
 
         setThreads(1);
@@ -54,10 +37,6 @@ struct Searcher {
         this->doUci       = doUci;
 
         reset();
-    }
-
-    ~Searcher() {
-        killAllThreads();
     }
 
     void runWorker(ThreadData& thisThread);
@@ -71,14 +50,11 @@ struct Searcher {
         transpositionTable.clear();
     }
     void setThreads(const usize newThreads) {
-        killAllThreads();
-        threadData.emplace_back(ThreadType::MAIN, stopFlag);
+        threads = std::make_unique<ThreadPool>(newThreads);
 
+        threadData.emplace_back(ThreadType::MAIN, stopFlag);
         for (usize i = 1; i < newThreads; i++)
             threadData.emplace_back(ThreadType::SECONDARY, stopFlag);
-
-        for (usize i = 0; i < newThreads; i++)
-            workers.emplace_back(&Searcher::runWorker, this, std::ref(threadData[i]));
     }
 
     void reset() {
