@@ -347,7 +347,7 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board)
     for (usize currDepth = 1; currDepth <= searchDepth; currDepth++) {
         SearchLimit& sl = currDepth == 1 ? depthOneSl : mainSl;
 
-        auto searchCancelled = [&]() {
+        const auto searchCancelled = [&]() {
             if (thisThread.type == ThreadType::MAIN)
                 return sl.outOfNodes(countNodes()) || sl.outOfTime() || thisThread.breakFlag.load(std::memory_order_relaxed);
             return thisThread.breakFlag.load(std::memory_order_relaxed) || (sp.softNodes > 0 && countNodes() > sp.softNodes);
@@ -355,7 +355,9 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board)
 
         const i16 score = search<PV>(board, currDepth, 0, -MATE_SCORE, MATE_SCORE, ss, thisThread, transpositionTable, sl);
 
-        if (currDepth > 1 && searchCancelled())
+        const bool cancelled = searchCancelled();
+
+        if (currDepth > 1 && cancelled)
             break;
 
         if (isMain) {
@@ -372,7 +374,7 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board)
             searchLock.unlock();
         }
 
-        if (currDepth == 1 && searchCancelled())
+        if (currDepth == 1 && cancelled)
             break;
 
         if (isMain) {
@@ -400,7 +402,7 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board)
             cout << "info nodes " << countNodes() << endl;
             cout << "bestmove " << this->pv.moves[0] << endl;
         }
-        stop();
+        thisThread.breakFlag.store(true, std::memory_order_relaxed);
     }
 
     return { this->pv.moves[0], this->score };

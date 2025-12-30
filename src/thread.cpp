@@ -46,4 +46,5 @@ void ThreadData::refresh(const Board& b) {
 
 void ThreadData::reset() {
     deepFill(history, 0);
+    deepFill(capthist, 0);
 }
