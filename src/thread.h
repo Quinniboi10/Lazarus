@@ -29,7 +29,8 @@ struct ThreadInfo {
     MultiArray<HistoryEntry, 2, 64, 64> history;
 
     // Capthist is indexed [stm][pt][captured pt][to]
-    MultiArray<HistoryEntry, 2, 6, 6, 64> capthist;
+    // En passant is a possible capture with no targeted type
+    MultiArray<HistoryEntry, 2, 6, 7, 64> capthist;
 
     // All the accumulators for each thread's search
     Stack<AccumulatorPair, MAX_PLY + 1> accumulatorStack;
