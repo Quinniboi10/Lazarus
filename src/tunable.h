@@ -78,6 +78,7 @@ Tunable(HIST_BONUS_B, 1024);   // Quantized by 1024
 Tunable(HIST_BONUS_C, 1024);   // Quantized by 1024
 
 Tunable(PAWN_CORRHIST_WEIGHT, 66);
+Tunable(MAJOR_CORRHIST_WEIGHT, 32);
 
 // Time management
 Tunable(DEFAULT_MOVES_TO_GO, 19018);  // Quantized by 1024

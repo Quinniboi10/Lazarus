@@ -15,8 +15,9 @@ struct Board {
     // Index is based on color
     array<u64, 2> byColor;
     // Board hash
-    u64 fullHash;
-    u64 pawnHash;
+    u64 fullHash;   // The entire board, for TT, threefold, etc
+    u64 pawnHash;   // Just the pawns
+    u64 majorHash;  // King + queen + rook
 
     // History of positions
     std::vector<u64> posHistory;

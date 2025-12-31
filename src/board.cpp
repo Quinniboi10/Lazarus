@@ -63,6 +63,8 @@ void Board::placePiece(const Color c, const PieceType pt, const Square sq) {
     fullHash ^= PIECE_ZTABLE[c][pt][sq];
     if (pt == PAWN)
         pawnHash ^= PIECE_ZTABLE[c][PAWN][sq];
+    else if (pt == KING || pt == QUEEN || pt == ROOK)
+        majorHash ^= PIECE_ZTABLE[c][pt][sq];
 
     BB ^= 1ULL << sq;
     byColor[c] ^= 1ULL << sq;
@@ -81,6 +83,8 @@ void Board::removePiece(const Color c, const PieceType pt, const Square sq) {
     fullHash ^= PIECE_ZTABLE[c][pt][sq];
     if (pt == PAWN)
         pawnHash ^= PIECE_ZTABLE[c][PAWN][sq];
+    else if (pt == KING || pt == QUEEN || pt == ROOK)
+        majorHash ^= PIECE_ZTABLE[c][pt][sq];
 
     BB ^= 1ULL << sq;
     byColor[c] ^= 1ULL << sq;
@@ -101,6 +105,8 @@ void Board::removePiece(const Color c, const Square sq) {
     fullHash ^= PIECE_ZTABLE[c][pt][sq];
     if (pt == PAWN)
         pawnHash ^= PIECE_ZTABLE[c][PAWN][sq];
+    else if (pt == KING || pt == QUEEN || pt == ROOK)
+        majorHash ^= PIECE_ZTABLE[c][pt][sq];
 
     BB ^= 1ULL << sq;
     byColor[c] ^= 1ULL << sq;
@@ -129,8 +135,9 @@ void Board::resetMailbox() {
 }
 
 void Board::resetHashes() {
-    fullHash = 0;
-    pawnHash = 0;
+    fullHash  = 0;
+    pawnHash  = 0;
+    majorHash = 0;
 
     for (PieceType pt = PAWN; pt <= KING; pt = static_cast<PieceType>(pt + 1)) {
         u64 pcs = pieces(WHITE, pt);
@@ -139,6 +146,8 @@ void Board::resetHashes() {
             fullHash ^= PIECE_ZTABLE[WHITE][pt][sq];
             if (pt == PAWN)
                 pawnHash ^= PIECE_ZTABLE[WHITE][PAWN][sq];
+            else if (pt == KING || pt == QUEEN || pt == ROOK)
+                majorHash ^= PIECE_ZTABLE[WHITE][pt][sq];
         }
 
         pcs = pieces(BLACK, pt);
@@ -147,6 +156,8 @@ void Board::resetHashes() {
             fullHash ^= PIECE_ZTABLE[BLACK][pt][sq];
             if (pt == PAWN)
                 pawnHash ^= PIECE_ZTABLE[BLACK][PAWN][sq];
+            else if (pt == KING || pt == QUEEN || pt == ROOK)
+                majorHash ^= PIECE_ZTABLE[BLACK][pt][sq];
         }
     }
 
@@ -846,10 +857,8 @@ string Board::toString(const Move m) const {
         else if (line == 2)
             ss << "Hash: 0x" << std::hex << std::uppercase << fullHash << std::dec;
         else if (line == 3)
-            ss << "Pawn hash: 0x" << std::hex << std::uppercase << pawnHash << std::dec;
-        else if (line == 4)
             ss << "Side to move: " << (stm == WHITE ? "WHITE" : "BLACK");
-        else if (line == 5)
+        else if (line == 4)
             ss << "En passant: " << (epSquare == NO_SQUARE ? "-" : squareToAlgebraic(epSquare));
         return ss.str();
     };

@@ -287,6 +287,7 @@ u64 perft(Board& board, const usize depth) {
     if (VERIFY_BOARD_HASH) {
         const u64 fullHash = board.fullHash;
         const u64 pawnHash = board.pawnHash;
+        const u64 majorHash = board.majorHash;
         board.resetHashes();
         if (fullHash != board.fullHash) {
             cerr << "FULL HASH CHECKS FAILED" << endl;
@@ -295,6 +296,11 @@ u64 perft(Board& board, const usize depth) {
         }
         if (pawnHash != board.pawnHash) {
             cerr << "PAWN HASH CHECKS FAILED" << endl;
+            cerr << board.toString() << endl;
+            std::exit(1);
+        }
+        if (majorHash != board.majorHash) {
+            cerr << "MAJOR HASH CHECKS FAILED" << endl;
             cerr << board.toString() << endl;
             std::exit(1);
         }

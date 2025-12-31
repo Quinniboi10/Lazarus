@@ -50,4 +50,5 @@ void ThreadData::reset() {
     deepFill(history, 0);
     deepFill(capthist, 0);
     deepFill(pawnCorrhist, 0);
+    deepFill(majorCorrhist, 0);
 }

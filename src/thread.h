@@ -36,6 +36,9 @@ struct ThreadData {
     // Pawn correction history indexed [stm][pawn key % size]
     MultiArray<HistoryEntry<MAX_CORRHIST>, 2, CORRHIST_SIZE> pawnCorrhist;
 
+    // Major correction history indexed [stm][major key % size]
+    MultiArray<HistoryEntry<MAX_CORRHIST>, 2, CORRHIST_SIZE> majorCorrhist;
+
     // All the accumulators for each thread's search
     Stack<AccumulatorPair, MAX_PLY + 1> accumulatorStack;
 
@@ -67,9 +70,14 @@ struct ThreadData {
     void updateCorrhist(const Board& b, const i16 depth, const i16 score, const i16 eval) {
         const i32 bonus = std::clamp<i32>((score - eval) * depth / 8, -MAX_CORRHIST / 4, MAX_CORRHIST / 4);
         pawnCorrhist[b.stm][b.pawnHash % CORRHIST_SIZE].update(bonus);
+        majorCorrhist[b.stm][b.majorHash % CORRHIST_SIZE].update(bonus);
     }
     i16 correctStaticEval(const Board& b, const i16 staticEval) const {
-        return std::clamp<i16>(staticEval + pawnCorrhist[b.stm][b.pawnHash % CORRHIST_SIZE] * PAWN_CORRHIST_WEIGHT / 512, MATED_IN_MAX_PLY, MATE_IN_MAX_PLY);
+        i32 correction = 0;
+        correction += pawnCorrhist[b.stm][b.pawnHash % CORRHIST_SIZE] * PAWN_CORRHIST_WEIGHT;
+        correction += majorCorrhist[b.stm][b.majorHash % CORRHIST_SIZE] * MAJOR_CORRHIST_WEIGHT;
+
+        return std::clamp<i16>(staticEval + correction / 512, MATED_IN_MAX_PLY, MATE_IN_MAX_PLY);
     }
 
     std::pair<Board, ThreadStackManager> makeMove(const Board& board, Move m);
