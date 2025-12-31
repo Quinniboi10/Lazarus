@@ -297,7 +297,27 @@ u64 perft(Board& board, const usize depth) {
 
         testBoard.move(m);
 
-        assert(board.roughKeyAfter(m) == testBoard.zobrist || m.typeOf() == CASTLE || m.typeOf() == EN_PASSANT || board.getPiece(m.from()) == ROOK || board.getPiece(m.to()) == ROOK || board.getPiece(m.from()) == KING);
+        if (VERIFY_BOARD_KEYAFTER && !(board.roughKeyAfter(m) == testBoard.fullHash || m.typeOf() == CASTLE || m.typeOf() == EN_PASSANT || board.getPiece(m.from()) == ROOK || board.getPiece(m.to()) == ROOK || board.getPiece(m.from()) == KING)) {
+            cerr << "KEYAFTER CHECKS FAILED" << endl;
+            std::exit(1);
+        }
+        if (VERIFY_BOARD_HASH) {
+            const u64 fullHash = board.fullHash;
+            const u64 pawnHash = board.pawnHash;
+            board.resetHashes();
+            if (fullHash != board.fullHash) {
+                cerr << "FULL HASH CHECKS FAILED" << endl;
+                cerr << board.toString() << endl;
+                cerr << m << endl;
+                std::exit(1);
+            }
+            if (pawnHash != board.pawnHash) {
+                cerr << "PAWN HASH CHECKS FAILED" << endl;
+                cerr << board.toString() << endl;
+                cerr << m << endl;
+                std::exit(1);
+            }
+        }
 
         nodes += perft(testBoard, depth - 1);
     }
@@ -336,7 +356,7 @@ void Movegen::perft(Board& board, const usize depth, const bool bulk) {
 
     cout << "Total nodes: " << formatNum(nodes) << endl;
     cout << "Time spent (ms): " << elapsedTime << endl;
-    cout << "Nodes per second: " << formatNum(nodes * 1000 / elapsedTime) << endl;
+    cout << "Nodes per second: " << formatNum(nodes * 1000 / std::max<u64>(elapsedTime, 1)) << endl;
 }
 
 void Movegen::perftSuite(const string& filePath) {

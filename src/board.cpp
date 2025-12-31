@@ -60,7 +60,9 @@ void Board::placePiece(const Color c, const PieceType pt, const Square sq) {
 
     assert(!readBit(BB, sq));
 
-    zobrist ^= PIECE_ZTABLE[c][pt][sq];
+    fullHash ^= PIECE_ZTABLE[c][pt][sq];
+    if (pt == PAWN)
+        pawnHash ^= PIECE_ZTABLE[c][PAWN][sq];
 
     BB ^= 1ULL << sq;
     byColor[c] ^= 1ULL << sq;
@@ -76,7 +78,9 @@ void Board::removePiece(const Color c, const PieceType pt, const Square sq) {
 
     assert(readBit(BB, sq));
 
-    zobrist ^= PIECE_ZTABLE[c][pt][sq];
+    fullHash ^= PIECE_ZTABLE[c][pt][sq];
+    if (pt == PAWN)
+        pawnHash ^= PIECE_ZTABLE[c][PAWN][sq];
 
     BB ^= 1ULL << sq;
     byColor[c] ^= 1ULL << sq;
@@ -88,11 +92,15 @@ void Board::removePiece(const Color c, const Square sq) {
     assert(sq >= 0);
     assert(sq < 64);
 
-    auto& BB = byPieces[getPiece(sq)];
+    const PieceType pt = getPiece(sq);
+
+    auto& BB = byPieces[pt];
 
     assert(readBit(BB, sq));
 
-    zobrist ^= PIECE_ZTABLE[c][getPiece(sq)][sq];
+    fullHash ^= PIECE_ZTABLE[c][pt][sq];
+    if (pt == PAWN)
+        pawnHash ^= PIECE_ZTABLE[c][PAWN][sq];
 
     BB ^= 1ULL << sq;
     byColor[c] ^= 1ULL << sq;
@@ -120,25 +128,33 @@ void Board::resetMailbox() {
     }
 }
 
-void Board::resetZobrist() {
-    zobrist = 0;
+void Board::resetHashes() {
+    fullHash = 0;
+    pawnHash = 0;
 
     for (PieceType pt = PAWN; pt <= KING; pt = static_cast<PieceType>(pt + 1)) {
         u64 pcs = pieces(WHITE, pt);
         while (pcs) {
             const Square sq = popLSB(pcs);
-            zobrist ^= PIECE_ZTABLE[WHITE][pt][sq];
+            fullHash ^= PIECE_ZTABLE[WHITE][pt][sq];
+            if (pt == PAWN)
+                pawnHash ^= PIECE_ZTABLE[WHITE][PAWN][sq];
         }
 
         pcs = pieces(BLACK, pt);
         while (pcs) {
             const Square sq = popLSB(pcs);
-            zobrist ^= PIECE_ZTABLE[BLACK][pt][sq];
+            fullHash ^= PIECE_ZTABLE[BLACK][pt][sq];
+            if (pt == PAWN)
+                pawnHash ^= PIECE_ZTABLE[BLACK][PAWN][sq];
         }
     }
 
-    zobrist ^= hashCastling();
-    zobrist ^= EP_ZTABLE[epSquare];
+    fullHash ^= hashCastling();
+    fullHash ^= EP_ZTABLE[epSquare];
+
+    if (stm == BLACK)
+        fullHash ^= STM_ZHASH;
 }
 
 // Updates checkers and pinners
@@ -253,7 +269,7 @@ u64 Board::attackersTo(const Square sq, const u64 occ) const {
 
 // Estimates the key after a move, ignores EP and castling
 u64 Board::roughKeyAfter(const Move m) const {
-    u64 key = zobrist ^ STM_ZHASH;
+    u64 key = fullHash ^ STM_ZHASH;
 
     if (m.isNull())
         return key;
@@ -308,15 +324,13 @@ void Board::reset() {
     epSquare = NO_SQUARE;
 
     halfMoveClock = 0;
-    fullMoveClock = 1;
-
     fromNull = false;
 
     resetMailbox();
-    resetZobrist();
+    resetHashes();
     updateCheckPin();
 
-    posHistory = { zobrist };
+    posHistory = { fullHash };
 }
 
 
@@ -402,10 +416,10 @@ void Board::loadFromFEN(const string& fen) {
     fromNull = false;
 
     resetMailbox();
-    resetZobrist();
+    resetHashes();
     updateCheckPin();
 
-    posHistory = { zobrist };
+    posHistory = { fullHash };
 }
 
 string Board::fen() const {
@@ -487,8 +501,8 @@ void Board::move(const string& str) {
 
 // Make a move
 void Board::move(const Move m) {
-    zobrist ^= hashCastling();
-    zobrist ^= EP_ZTABLE[epSquare];
+    fullHash ^= hashCastling();
+    fullHash ^= EP_ZTABLE[epSquare];
 
     epSquare             = NO_SQUARE;
     fromNull             = false;
@@ -560,11 +574,11 @@ void Board::move(const Move m) {
 
     stm = ~stm;
 
-    zobrist ^= hashCastling();
-    zobrist ^= EP_ZTABLE[epSquare];
-    zobrist ^= STM_ZHASH;
+    fullHash ^= hashCastling();
+    fullHash ^= EP_ZTABLE[epSquare];
+    fullHash ^= STM_ZHASH;
 
-    posHistory.push_back(zobrist);
+    posHistory.push_back(fullHash);
 
     fullMoveClock += stm == WHITE;
 
@@ -584,16 +598,16 @@ bool Board::canNullMove() const {
 
 void Board::nullMove() {
     // En passant
-    zobrist ^= EP_ZTABLE[epSquare];
-    zobrist ^= EP_ZTABLE[NO_SQUARE];
+    fullHash ^= EP_ZTABLE[epSquare];
+    fullHash ^= EP_ZTABLE[NO_SQUARE];
 
     epSquare = NO_SQUARE;
 
     // Stm
-    zobrist ^= STM_ZHASH;
+    fullHash ^= STM_ZHASH;
     stm = ~stm;
 
-    posHistory.push_back(zobrist);
+    posHistory.push_back(fullHash);
 
     fromNull = true;
     updateCheckPin();
@@ -720,7 +734,7 @@ bool Board::isDraw() {
     // Threefold
     u8 seen = 0;
     for (const u64 hash : posHistory) {
-        seen += hash == zobrist;
+        seen += hash == fullHash;
         if (seen >= 3)
             return true;
     }
@@ -830,10 +844,12 @@ string Board::toString(const Move m) const {
         if (line == 1)
             ss << "FEN: " << fen();
         else if (line == 2)
-            ss << "Hash: 0x" << std::hex << std::uppercase << zobrist << std::dec;
+            ss << "Hash: 0x" << std::hex << std::uppercase << fullHash << std::dec;
         else if (line == 3)
-            ss << "Side to move: " << (stm == WHITE ? "WHITE" : "BLACK");
+            ss << "Pawn hash: 0x" << std::hex << std::uppercase << pawnHash << std::dec;
         else if (line == 4)
+            ss << "Side to move: " << (stm == WHITE ? "WHITE" : "BLACK");
+        else if (line == 5)
             ss << "En passant: " << (epSquare == NO_SQUARE ? "-" : squareToAlgebraic(epSquare));
         return ss.str();
     };

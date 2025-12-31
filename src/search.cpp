@@ -110,8 +110,8 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
     TTFlag ttFlag = FAIL_LOW;
 
     // TT probing
-    Transposition& ttEntry = tt.getEntry(board.zobrist);
-    const bool     ttHit   = ss->excluded.isNull() && ttEntry.key == board.zobrist;
+    Transposition& ttEntry = tt.getEntry(board.fullHash);
+    const bool     ttHit   = ss->excluded.isNull() && ttEntry.key == board.fullHash;
 
     if (!isPV && ttHit && ttEntry.depth >= depth &&
         (ttEntry.flag == EXACT                                      // Exact score
@@ -121,12 +121,12 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         const i32& ttScore = ttEntry.score;
         if (isLoss(ttScore))
             return ttScore + ply;
-        else if (isWin(ttScore))
+        if (isWin(ttScore))
             return ttScore - ply;
         return ttScore;
     }
 
-    ss->staticEval = nnue.evaluate(board, thisThread);
+    ss->staticEval = thisThread.correctStaticEval(board, nnue.evaluate(board, thisThread));
 
     // Has the current position improving since last time stm played
     const bool improving = ss->staticEval > (ss - 2)->staticEval;
@@ -293,8 +293,13 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
     else if (isWin(bestScore))
         ttScore = bestScore + static_cast<i16>(ply);
 
-    if (ss->excluded.isNull()) {
-        const Transposition newEntry(board.zobrist, bestMove, ttFlag, ttScore, depth);
+    if (ss->excluded.isNull() && !thisThread.breakFlag.load(std::memory_order_relaxed)) {
+        // Update correction histories
+        if (!board.inCheck() && (board.isQuiet(bestMove) || bestMove.isNull()) && (ttFlag == EXACT || ttFlag == BETA_CUTOFF && bestScore > ss->staticEval || ttFlag == FAIL_LOW && bestScore < ss->staticEval))
+            thisThread.updateCorrhist(board, depth, bestScore, ss->staticEval);
+
+        // Update TT
+        const Transposition newEntry(board.fullHash, bestMove, ttFlag, ttScore, depth);
 
         if (tt.shouldReplace(ttEntry, newEntry))
             ttEntry = newEntry;

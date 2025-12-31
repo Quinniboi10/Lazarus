@@ -48,4 +48,6 @@ void ThreadInfo::refresh(const Board& b) {
 
 void ThreadInfo::reset() {
     deepFill(history, 0);
+    deepFill(capthist, 0);
+    deepFill(pawnCorrhist, 0);
 }

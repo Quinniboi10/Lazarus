@@ -15,7 +15,8 @@ struct Board {
     // Index is based on color
     array<u64, 2> byColor;
     // Board hash
-    u64 zobrist;
+    u64 fullHash;
+    u64 pawnHash;
 
     // History of positions
     std::vector<u64> posHistory;
@@ -44,7 +45,7 @@ struct Board {
     void removePiece(Color c, PieceType pt, Square sq);
     void removePiece(Color c, Square sq);
     void resetMailbox();
-    void resetZobrist();
+    void resetHashes();
     void updateCheckPin();
 
     void setCastlingRights(Color c, Square sq, bool value);
@@ -104,4 +105,6 @@ struct Board {
     bool see(Move m, int threshold) const;
 
     string toString(Move m = Move::null()) const;
+
+    friend u64 perft(Board& board, usize depth);
 };

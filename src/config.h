@@ -5,6 +5,11 @@
 // ************ TUNING ************
 // #define TUNE
 
+// ************ HISTORIES ************
+constexpr i32 MAX_HISTORY   = 16384;
+constexpr i32 MAX_CORRHIST  = 1024;
+constexpr i32 CORRHIST_SIZE = 16384;
+
 // ************ SEARCH ************
 constexpr usize MAX_PLY     = 255;
 constexpr i16   BENCH_DEPTH = 9;
@@ -23,3 +28,7 @@ constexpr int CReLU  = 1;
 constexpr int SCReLU = 2;
 
 constexpr int ACTIVATION = SCReLU;
+
+// ************ VERIFICATIONS ************
+constexpr bool VERIFY_BOARD_KEYAFTER = false;
+constexpr bool VERIFY_BOARD_HASH     = false;

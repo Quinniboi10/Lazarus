@@ -6,6 +6,7 @@
 
 #include <utility>
 
+template <i32 MAX_VALUE>
 struct HistoryEntry {
     i32 value;
 
@@ -19,18 +20,21 @@ struct HistoryEntry {
     }
 
     void update(const i32 bonus) {
-        const i32 clampedBonus = std::clamp<i32>(bonus, -MAX_HISTORY, MAX_HISTORY);
-        value += clampedBonus - value * abs(clampedBonus) / MAX_HISTORY;
+        const i32 clampedBonus = std::clamp<i32>(bonus, -MAX_VALUE, MAX_VALUE);
+        value += clampedBonus - value * abs(clampedBonus) / MAX_VALUE;
     }
 };
 
 struct ThreadInfo {
     // History is indexed [stm][from][to]
-    MultiArray<HistoryEntry, 2, 64, 64> history;
+    MultiArray<HistoryEntry<MAX_HISTORY>, 2, 64, 64> history;
 
     // Capthist is indexed [stm][pt][captured pt][to]
     // En passant is a possible capture with no targeted type
-    MultiArray<HistoryEntry, 2, 6, 7, 64> capthist;
+    MultiArray<HistoryEntry<MAX_HISTORY>, 2, 6, 7, 64> capthist;
+
+    // Pawn correction history indexed [stm][pawn key % size]
+    MultiArray<HistoryEntry<MAX_CORRHIST>, 2, CORRHIST_SIZE> pawnCorrhist;
 
     // All the accumulators for each thread's search
     Stack<AccumulatorPair, MAX_PLY + 1> accumulatorStack;
@@ -48,17 +52,24 @@ struct ThreadInfo {
     ThreadInfo(const ThreadInfo& other);
 
     // Accessors for the histories
-    HistoryEntry& getHistory(const Board& b, const Move m) {
+    auto& getHistory(const Board& b, const Move m) {
         return history[b.stm][m.from()][m.to()];
     }
-    const HistoryEntry& getHistory(const Board& b, const Move m) const {
+    auto& getHistory(const Board& b, const Move m) const {
         return history[b.stm][m.from()][m.to()];
     }
-    HistoryEntry& getCaptureHistory(const Board& b, const Move m) {
+    auto& getCaptureHistory(const Board& b, const Move m) {
         return capthist[b.stm][b.getPiece(m.from())][b.getPiece(m.to())][m.to()];
     }
-    const HistoryEntry& getCaptureHistory(const Board& b, const Move m) const {
+    auto& getCaptureHistory(const Board& b, const Move m) const {
         return capthist[b.stm][b.getPiece(m.from())][b.getPiece(m.to())][m.to()];
+    }
+    void updateCorrhist(const Board& b, const i16 depth, const i16 score, const i16 eval) {
+        const i32 bonus = std::clamp<i32>((score - eval) * depth / 8, -MAX_CORRHIST / 4, MAX_CORRHIST / 4);
+        pawnCorrhist[b.stm][b.pawnHash % CORRHIST_SIZE].update(bonus);
+    }
+    i16 correctStaticEval(const Board& b, const i16 staticEval) const {
+        return std::clamp<i16>(staticEval + pawnCorrhist[b.stm][b.pawnHash % CORRHIST_SIZE] * PAWN_CORRHIST_WEIGHT / 512, MATED_IN_MAX_PLY, MATE_IN_MAX_PLY);
     }
 
     std::pair<Board, ThreadStackManager> makeMove(const Board& board, Move m);

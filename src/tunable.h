@@ -60,8 +60,6 @@ static void printTuneOB() {
     #define Tunable(name, value) constexpr i32 name = value
 #endif
 
-constexpr i32 MAX_HISTORY = 16384;
-
 // Piece values
 Tunable(PAWN_VALUE, 100);
 Tunable(KNIGHT_VALUE, 300);
@@ -78,6 +76,8 @@ Tunable(MO_CAPTHIST_WEIGHT, 891);  // Quantized by 1024
 Tunable(HIST_BONUS_A, 21504);  // Quantized by 1024
 Tunable(HIST_BONUS_B, 1024);   // Quantized by 1024
 Tunable(HIST_BONUS_C, 1024);   // Quantized by 1024
+
+Tunable(PAWN_CORRHIST_WEIGHT, 66);
 
 // Time management
 Tunable(DEFAULT_MOVES_TO_GO, 19018);  // Quantized by 1024
