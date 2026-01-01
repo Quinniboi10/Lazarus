@@ -340,8 +340,6 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board,
 
     const usize searchDepth = std::min(sp.depth, MAX_PLY);
 
-    auto countNodes = [&]() -> u64 { return thisThread.nodes; };
-
     // Pretty printing
     if (isMain && doReporting && !doUci) {
         cursor::home();
@@ -353,14 +351,29 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board,
     for (usize currDepth = 1; currDepth <= searchDepth; currDepth++) {
         SearchLimit& sl = currDepth == 1 ? depthOneSl : mainSl;
 
-        auto searchCancelled = [&]() {
+        const auto searchCancelled = [&]() {
             if (thisThread.type == ThreadType::MAIN)
-                return sl.outOfNodes(countNodes()) || sl.outOfTime() || thisThread.breakFlag.load(std::memory_order_relaxed);
-            else
-                return thisThread.breakFlag.load(std::memory_order_relaxed) || (sp.softNodes > 0 && countNodes() > sp.softNodes);
+                return sl.outOfNodes(totalNodes()) || sl.outOfTime() || thisThread.breakFlag.load(std::memory_order_relaxed);
+            return thisThread.breakFlag.load(std::memory_order_relaxed) || (sp.softNodes > 0 && totalNodes() > sp.softNodes);
         };
 
-        const i16 score = search<PV>(board, currDepth, 0, -MATE_SCORE, MATE_SCORE, ss, thisThread, transpositionTable, sl);
+        i16 score;
+        if (currDepth < MIN_ASP_WINDOW_DEPTH)
+            score = search<PV>(board, currDepth, 0, -INF_I16, INF_I16, ss, thisThread, transpositionTable, sl);
+        else {
+            int delta = INITIAL_ASP_WINDOW;
+
+            while (!searchCancelled()) {
+                const i16 alpha = std::max<i32>(this->score - delta, -INF_I16);
+                const i16 beta  = std::min<i32>(this->score + delta, INF_I16);
+                score = search<PV>(board, currDepth, 0, alpha, beta, ss, thisThread, transpositionTable, sl);
+                if (score <= alpha || score >= beta)
+                    delta = ASP_WIDENING_FACTOR / 1024.0 * delta;
+                else
+                    break;
+            }
+        }
+
 
         // If depth 1 was searched, save its results
         if (currDepth == 1) {
@@ -396,7 +409,7 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board,
 
         if (isMain) {
             // Soft nodes
-            if (sp.softNodes > 0 && countNodes() > sp.softNodes)
+            if (sp.softNodes > 0 && totalNodes() > sp.softNodes)
                 break;
             // Go mate
             if (sp.mate > 0 && MATE_SCORE - std::abs(score) / 2 + 1 <= sp.mate)
@@ -408,7 +421,7 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board,
     }
 
     if (isMain && doReporting && doUci) {
-        cout << "info nodes " << countNodes() << endl;
+        cout << "info nodes " << totalNodes() << endl;
         cout << "bestmove " << this->pv.moves[0] << endl;
     }
 

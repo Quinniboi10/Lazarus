@@ -83,6 +83,11 @@ Tunable(PAWN_CORRHIST_WEIGHT, 66);
 Tunable(DEFAULT_MOVES_TO_GO, 19018);  // Quantized by 1024
 Tunable(INC_DIVISOR, 2156);           // Quantized by 1024
 
+// Aspiration windows
+constexpr i32 MIN_ASP_WINDOW_DEPTH = 5;
+Tunable(INITIAL_ASP_WINDOW, 30);
+Tunable(ASP_WIDENING_FACTOR, 2591);  // Quantized by 1024
+
 // Main search
 constexpr i16 NMP_DEPTH_REDUCTION = 4;
 constexpr i32 SE_MIN_DEPTH        = 8;
