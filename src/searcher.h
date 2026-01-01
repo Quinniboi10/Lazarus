@@ -4,15 +4,17 @@
 #include "thread.h"
 #include "ttable.h"
 
+#include <barrier>
 #include <thread>
 
 struct Searcher {
     TranspositionTable transpositionTable;
 
-    std::atomic<bool>                    stopFlag;
-    Stopwatch<std::chrono::milliseconds> time;
-    std::unique_ptr<ThreadInfo>          threadData;
-    std::jthread                         thread;
+    std::atomic<bool>        stopFlag{ true };
+    std::vector<ThreadData>  threadData;
+    std::vector<std::thread> threads;
+
+    SearchParams sp;
 
     // Atomic probes to get information from the search
     std::mutex                          searchLock{};
@@ -29,32 +31,38 @@ struct Searcher {
     bool doUci;
 
     explicit Searcher(const bool doReporting, const bool doUci = false) {
-        stopFlag.store(true, std::memory_order_relaxed);
-        time.reset();
-
-        threadData        = std::make_unique<ThreadInfo>(ThreadType::MAIN, stopFlag);
+        setThreads(1);
         this->doReporting = doReporting;
         this->doUci       = doUci;
 
         reset();
     }
 
+    u64 totalNodes() const {
+        u64 nodes = 0;
+        for (const ThreadData& t : threadData)
+            nodes += t.nodes.load(std::memory_order_relaxed);
+        return nodes;
+    }
+
     void start(const Board& board, SearchParams sp);
     void stop();
     void waitUntilFinished();
 
+    void setThreads(usize numThreads);
+
     void resizeTT(const u64 newSizeMiB) {
-        fmt::println("Trying for {} MiB", newSizeMiB);
         transpositionTable.reserve(newSizeMiB);
         transpositionTable.clear();
     }
 
     void reset() {
-        threadData->reset();
         transpositionTable.clear();
+        for (auto& t : threadData)
+            t.reset();
     }
 
-    MoveEvaluation iterativeDeepening(Board board, SearchParams sp);
+    MoveEvaluation iterativeDeepening(ThreadData& thisThread, Board board, SearchParams sp);
 
     void reportUci();
     void reportPrettyPrint();

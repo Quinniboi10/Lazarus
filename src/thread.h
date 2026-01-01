@@ -6,7 +6,7 @@
 
 #include <utility>
 
-template <i32 MAX_VALUE>
+template<i32 MAX_VALUE>
 struct HistoryEntry {
     i32 value;
 
@@ -25,7 +25,7 @@ struct HistoryEntry {
     }
 };
 
-struct ThreadInfo {
+struct ThreadData {
     // History is indexed [stm][from][to]
     MultiArray<HistoryEntry<MAX_HISTORY>, 2, 64, 64> history;
 
@@ -46,10 +46,10 @@ struct ThreadInfo {
     std::atomic<u64> nodes;
     usize            seldepth;
 
-    ThreadInfo(ThreadType type, std::atomic<bool>& breakFlag);
+    ThreadData(ThreadType type, std::atomic<bool>& breakFlag);
 
     // Copy constructor
-    ThreadInfo(const ThreadInfo& other);
+    ThreadData(const ThreadData& other);
 
     // Accessors for the histories
     auto& getHistory(const Board& b, const Move m) {
@@ -82,9 +82,9 @@ struct ThreadInfo {
 };
 
 struct ThreadStackManager {
-    ThreadInfo& thisThread;
+    ThreadData& thisThread;
 
-    explicit ThreadStackManager(ThreadInfo& thisThread) :
+    explicit ThreadStackManager(ThreadData& thisThread) :
         thisThread(thisThread) {}
 
     ThreadStackManager(const ThreadStackManager& other) = delete;

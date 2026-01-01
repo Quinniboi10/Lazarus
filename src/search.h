@@ -8,7 +8,7 @@
 #include <cstring>
 #include <thread>
 
-struct ThreadInfo;
+struct ThreadData;
 struct ThreadStackManager;
 
 struct SearchStack {
@@ -36,6 +36,8 @@ struct SearchParams {
     u64   winc;
     u64   binc;
     usize mate;
+
+    SearchParams() = default;
 
     SearchParams(const Stopwatch<std::chrono::milliseconds>& time, const usize depth, const u64 nodes, const u64 softNodes, const u64 mtime, const u64 wtime, const u64 btime, const u64 winc, const u64 binc, const usize mate) :
         time(time),
