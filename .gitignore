@@ -48,6 +48,7 @@
 
 # Engine build
 Lazarus*
+!src/Lazarus.cpp
 
 # NNUE
 *.nnue

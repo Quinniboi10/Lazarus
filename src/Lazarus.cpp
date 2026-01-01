@@ -53,7 +53,7 @@ int main(const int argc, char* argv[]) {
 
     loadDefaultNet(true);
 
-    Board board;
+    Board  board;
     string command;
 
     board.reset();
@@ -173,7 +173,9 @@ int main(const int argc, char* argv[]) {
             searcher.start(board, SearchParams(commandTime, depth, maxNodes, softNodes, mtime, wtime, btime, winc, binc, mate));
         }
         else if (tokens[0] == "setoption") {
-            if (tokens[2] == "Hash")
+            if (tokens[2] == "Threads")
+                searcher.setThreads(std::stoull(getValueFollowing(command, "value", 1)));
+            else if (tokens[2] == "Hash")
                 searcher.resizeTT(std::stoull(getValueFollowing(command, "value", 16)));
             else if (tokens[2] == "Move" && tokens[3] == "Overhead")
                 MOVE_OVERHEAD = std::stoi(tokens[findIndexOf(tokens, "value") + 1]);
@@ -229,9 +231,9 @@ int main(const int argc, char* argv[]) {
         else if (tokens[0] == "perftsuite")
             Movegen::perftSuite(tokens[1]);
         else if (command == "eval") {
-            searcher.threadData->refresh(board);
-            cout << "Raw eval: " << nnue.forwardPass(&board, searcher.threadData->accumulatorStack.top()) << endl;
-            nnue.showBuckets(&board, searcher.threadData->accumulatorStack.top());
+            searcher.threadData[0].refresh(board);
+            cout << "Raw eval: " << nnue.forwardPass(&board, searcher.threadData[0].accumulatorStack.top()) << endl;
+            nnue.showBuckets(&board, searcher.threadData[0].accumulatorStack.top());
         }
         else if (command == "moves") {
             for (Move m : Movegen::generateMoves<ALL_MOVES>(board)) {

@@ -34,7 +34,7 @@ const auto lmrTable = []() {
 
 // Quiescence search
 template<NodeType isPV>
-i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo& thisThread) {
+i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadData& thisThread) {
     const i16 staticEval = nnue.evaluate(board, thisThread);
     if (ply >= MAX_PLY)
         return staticEval;
@@ -80,7 +80,7 @@ i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadInfo
 }
 // Main search
 template<NodeType isPV>
-i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, SearchStack* ss, ThreadInfo& thisThread, TranspositionTable& tt, SearchLimit& sl) {
+i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, SearchStack* ss, ThreadData& thisThread, TranspositionTable& tt, SearchLimit& sl) {
     if (depth + static_cast<i16>(ply) > static_cast<i16>(MAX_PLY))
         depth = MAX_PLY - ply;
     if constexpr (isPV)
@@ -308,10 +308,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
     return bestScore;
 }
 
-MoveEvaluation Searcher::iterativeDeepening(Board board, SearchParams sp) {
-    // In future this would be logic to pick the thread's data in SMP
-    ThreadInfo& thisThread = *threadData;
-
+MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board, SearchParams sp) {
     thisThread.breakFlag.store(false);
     thisThread.nodes    = 0;
     thisThread.seldepth = 0;
@@ -495,11 +492,11 @@ void bench() {
 
         const u64 durationMs = time.elapsed();
 
-        totalNodes += searcher.threadData->nodes;
+        totalNodes += searcher.totalNodes();
         totalTimeMs += durationMs;
 
         cout << "FEN: " << fen << endl;
-        cout << "Nodes: " << formatNum(searcher.threadData->nodes) << ", Time: " << formatTime(durationMs) << endl;
+        cout << "Nodes: " << formatNum(searcher.totalNodes()) << ", Time: " << formatTime(durationMs) << endl;
         cout << "----------------------------------------" << endl;
     }
 

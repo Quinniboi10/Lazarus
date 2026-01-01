@@ -1,7 +1,7 @@
 #include "thread.h"
 #include <tuple>
 
-ThreadInfo::ThreadInfo(const ThreadType type, std::atomic<bool>& breakFlag) :
+ThreadData::ThreadData(const ThreadType type, std::atomic<bool>& breakFlag) :
     type(type),
     breakFlag(breakFlag) {
     breakFlag.store(false, std::memory_order_relaxed);
@@ -10,7 +10,7 @@ ThreadInfo::ThreadInfo(const ThreadType type, std::atomic<bool>& breakFlag) :
     nodes    = 0;
     seldepth = 0;
 }
-ThreadInfo::ThreadInfo(const ThreadInfo& other) :
+ThreadData::ThreadData(const ThreadData& other) :
     history(other.history),
     accumulatorStack(other.accumulatorStack),
     type(other.type),
@@ -19,7 +19,7 @@ ThreadInfo::ThreadInfo(const ThreadInfo& other) :
     nodes.store(other.nodes.load(std::memory_order_relaxed), std::memory_order_relaxed);
 }
 
-std::pair<Board, ThreadStackManager> ThreadInfo::makeMove(const Board& board, const Move m) {
+std::pair<Board, ThreadStackManager> ThreadData::makeMove(const Board& board, const Move m) {
     Board newBoard = board;
     newBoard.move(m);
 
@@ -29,7 +29,7 @@ std::pair<Board, ThreadStackManager> ThreadInfo::makeMove(const Board& board, co
     return { std::piecewise_construct, std::forward_as_tuple(std::move(newBoard)), std::forward_as_tuple(*this) };
 }
 
-std::pair<Board, ThreadStackManager> ThreadInfo::makeNullMove(const Board& board) {
+std::pair<Board, ThreadStackManager> ThreadData::makeNullMove(const Board& board) {
     Board newBoard = board;
     newBoard.nullMove();
 
@@ -38,7 +38,7 @@ std::pair<Board, ThreadStackManager> ThreadInfo::makeNullMove(const Board& board
     return { std::piecewise_construct, std::forward_as_tuple(std::move(newBoard)), std::forward_as_tuple(*this) };
 }
 
-void ThreadInfo::refresh(const Board& b) {
+void ThreadData::refresh(const Board& b) {
     accumulatorStack.clear();
 
     AccumulatorPair accumulators{};
@@ -46,7 +46,7 @@ void ThreadInfo::refresh(const Board& b) {
     accumulatorStack.push(accumulators);
 }
 
-void ThreadInfo::reset() {
+void ThreadData::reset() {
     deepFill(history, 0);
     deepFill(capthist, 0);
     deepFill(pawnCorrhist, 0);
