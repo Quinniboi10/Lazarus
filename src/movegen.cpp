@@ -284,10 +284,26 @@ u64 multithreadBulk(Board& board, usize depth) {
 u64 perft(Board& board, const usize depth) {
     u64 nodes = 0;
 
-    MoveList moves = Movegen::generateMoves<ALL_MOVES>(board);
+    if (VERIFY_BOARD_HASH) {
+        const u64 fullHash = board.fullHash;
+        const u64 pawnHash = board.pawnHash;
+        board.resetHashes();
+        if (fullHash != board.fullHash) {
+            cerr << "FULL HASH CHECKS FAILED" << endl;
+            cerr << board.toString() << endl;
+            std::exit(1);
+        }
+        if (pawnHash != board.pawnHash) {
+            cerr << "PAWN HASH CHECKS FAILED" << endl;
+            cerr << board.toString() << endl;
+            std::exit(1);
+        }
+    }
 
     if (depth == 0)
         return 1;
+
+    const MoveList moves = Movegen::generateMoves<ALL_MOVES>(board);
 
     for (const Move m : moves) {
         if (!board.isLegal(m))
@@ -300,23 +316,6 @@ u64 perft(Board& board, const usize depth) {
         if (VERIFY_BOARD_KEYAFTER && !(board.roughKeyAfter(m) == testBoard.fullHash || m.typeOf() == CASTLE || m.typeOf() == EN_PASSANT || board.getPiece(m.from()) == ROOK || board.getPiece(m.to()) == ROOK || board.getPiece(m.from()) == KING)) {
             cerr << "KEYAFTER CHECKS FAILED" << endl;
             std::exit(1);
-        }
-        if (VERIFY_BOARD_HASH) {
-            const u64 fullHash = board.fullHash;
-            const u64 pawnHash = board.pawnHash;
-            board.resetHashes();
-            if (fullHash != board.fullHash) {
-                cerr << "FULL HASH CHECKS FAILED" << endl;
-                cerr << board.toString() << endl;
-                cerr << m << endl;
-                std::exit(1);
-            }
-            if (pawnHash != board.pawnHash) {
-                cerr << "PAWN HASH CHECKS FAILED" << endl;
-                cerr << board.toString() << endl;
-                cerr << m << endl;
-                std::exit(1);
-            }
         }
 
         nodes += perft(testBoard, depth - 1);

@@ -113,7 +113,7 @@ int main(const int argc, char* argv[]) {
 #endif
                  << endl;
             cout << "id author Quinniboi10" << endl;
-            cout << "option name Threads type spin default 1 min 1 max 512" << endl;
+            cout << "option name Threads type spin default 1 min 1 max 2048" << endl;
             cout << "option name Hash type spin default 16 min 1 max 524288" << endl;
             cout << "option name Move Overhead type spin default 20 min 0 max 1000" << endl;
             cout << "option name EvalFile type string default internal" << endl;
@@ -126,7 +126,6 @@ int main(const int argc, char* argv[]) {
         }
         else if (command == "icu") {
             searcher.doUci = false;
-
             cout << "koicu" << endl;
         }
         else if (command == "ucinewgame")
@@ -207,15 +206,12 @@ int main(const int argc, char* argv[]) {
         // ************ NON-UCI ************
 
 
+        else if (command == "help")
+            cout << "Lazarus is a UCI compatiable chess engine. For a list of commands please refer to the UCI spec." << endl;
         else if (command == "d")
             cout << board.toString() << endl;
-        else if (tokens[0] == "perft") {
-            if (tokens.size() < 2) {
-                cout << "Usage: perft <depth>" << endl;
-                continue;
-            }
-            Movegen::perft(board, std::stoi(tokens[1]), false);
-        }
+        else if (tokens[0] == "move")
+            board.move(Move(tokens[1], board));
         else if (tokens[0] == "bulk") {
             if (tokens.size() < 2) {
                 cout << "Usage: bulk <depth>" << endl;
@@ -223,19 +219,22 @@ int main(const int argc, char* argv[]) {
             }
             Movegen::perft(board, std::stoi(tokens[1]), true);
         }
+        else if (tokens[0] == "perft") {
+            if (tokens.size() < 2) {
+                cout << "Usage: perft <depth>" << endl;
+                continue;
+            }
+            Movegen::perft(board, std::stoi(tokens[1]), false);
+        }
         else if (tokens[0] == "perftsuite")
             Movegen::perftSuite(tokens[1]);
-        else if (tokens[0] == "move") {
-            board.move(Move(tokens[1], board));
-        }
-        else if (command == "debug.eval") {
+        else if (command == "eval") {
             searcher.threadData->refresh(board);
             cout << "Raw eval: " << nnue.forwardPass(&board, searcher.threadData->accumulatorStack.top()) << endl;
             nnue.showBuckets(&board, searcher.threadData->accumulatorStack.top());
         }
-        else if (command == "debug.moves") {
-            MoveList moves = Movegen::generateMoves<ALL_MOVES>(board);
-            for (Move m : moves) {
+        else if (command == "moves") {
+            for (Move m : Movegen::generateMoves<ALL_MOVES>(board)) {
                 cout << m;
                 if (board.isLegal(m))
                     cout << " <- legal" << endl;
@@ -243,9 +242,10 @@ int main(const int argc, char* argv[]) {
                     cout << " <- illegal" << endl;
             }
         }
-        else if (command == "debug.gamestate") {
-            Square whiteKing = getLSB(board.pieces(WHITE, KING));
-            Square blackKing = getLSB(board.pieces(BLACK, KING));
+        else if (command == "gamestate") {
+            const Square whiteKing = getLSB(board.pieces(WHITE, KING));
+            const Square blackKing = getLSB(board.pieces(BLACK, KING));
+            cout << board.toString() << endl;
             cout << "Is in check (white): " << board.isUnderAttack(WHITE, whiteKing) << endl;
             cout << "Is in check (black): " << board.isUnderAttack(BLACK, blackKing) << endl;
             cout << "En passant square: " << (board.epSquare != NO_SQUARE ? squareToAlgebraic(board.epSquare) : "-") << endl;
@@ -257,13 +257,13 @@ int main(const int argc, char* argv[]) {
             cout << squareToAlgebraic(board.castling[castleIndex(BLACK, false)]);
             cout << " }" << endl;
         }
-        else if (command == "debug.incheck")
+        else if (command == "incheck")
             cout << "Stm is " << (board.inCheck() ? "in check" : "NOT in check") << endl;
-        else if (tokens[0] == "debug.islegal")
+        else if (tokens[0] == "islegal")
             cout << tokens[1] << " is " << (board.isLegal(Move(tokens[1], board)) ? "" : "not ") << "legal" << endl;
-        else if (command == "debug.keyafter")
+        else if (tokens[0] == "keyafter")
             cout << "Expected hash: 0x" << std::hex << std::uppercase << board.roughKeyAfter(Move(tokens[1], board)) << std::dec << endl;
-        else if (command == "debug.popcnt") {
+        else if (command == "piececount") {
             cout << "White pawns: " << popcount(board.pieces(WHITE, PAWN)) << endl;
             cout << "White knights: " << popcount(board.pieces(WHITE, KNIGHT)) << endl;
             cout << "White bishops: " << popcount(board.pieces(WHITE, BISHOP)) << endl;
