@@ -5,6 +5,8 @@
 #include "types.h"
 #include "wdl.h"
 
+#include <ranges>
+
 void Searcher::start(const Board& board, const SearchParams sp) {
     stop();
 
@@ -20,16 +22,14 @@ void Searcher::start(const Board& board, const SearchParams sp) {
 
     stopFlag.store(false, std::memory_order_relaxed);
 
-    for (auto& t : threadData)
+    for (auto& t : std::views::reverse(threadData))
         threads.emplace_back(&Searcher::iterativeDeepening, this, std::ref(t), board, sp);
 }
 
 void Searcher::stop() {
     stopFlag.store(true, std::memory_order_relaxed);
 
-    for (auto& t : threads)
-        if (t.joinable())
-            t.join();
+    waitUntilFinished();
 
     threads.clear();
 }
