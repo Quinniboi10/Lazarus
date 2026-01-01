@@ -29,7 +29,7 @@ inline WinRateParams winRateParams(const Board& board) {
 
 // The win rate model is 1 / (1 + exp((a - eval) / b)), where a = p_a(material) and b = p_b(material).
 // It fits the LTC fishtest statistics rather accurately.
-inline int winRateModel(const int v, const Board& board) {
+inline int winRateModel(const Board& board, const int v) {
     auto [a, b] = winRateParams(board);
 
     // Return the win rate in per mille units, rounded to the nearest integer.
@@ -42,4 +42,27 @@ inline int scaleEval(const int eval, const Board& board) {
     auto [a, b] = winRateParams(board);
 
     return std::round(100 * eval / a);
+}
+
+inline std::tuple<i16, i16, i16> getWDL(const Board& board, const i16 score) {
+    i16 w;
+    i16 d;
+    i16 l;
+    if (isWin(score)) {
+        w = 1000;
+        d = 0;
+        l = 0;
+    }
+    else if (isLoss(score)) {
+        w = 0;
+        d = 0;
+        l = 1000;
+    }
+    else {
+        w = winRateModel(board, score);
+        l = winRateModel(board, -score);
+        d = 1000 - w - l;
+    }
+
+    return { w, d, l };
 }
