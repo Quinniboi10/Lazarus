@@ -14,16 +14,6 @@
 #include <string_view>
 #include <vector>
 
-#ifdef _WIN32
-    #ifndef NOMINMAX
-        #define NOMINMAX
-    #endif
-    #include <windows.h>
-#else
-    #include <sys/ioctl.h>
-    #include <unistd.h>
-#endif
-
 inline bool readBit(const u64 bb, const usize idx) {
     return (1ULL << idx) & bb;
 }
@@ -275,48 +265,6 @@ inline u64 parseSuffixedNum(string text) {
     const double value = std::stod(numeric);
 
     return std::round(value * multiplier);
-}
-
-inline int getTerminalRows() {
-    auto envLines = []() -> int {
-        if (const char* s = std::getenv("LINES")) {
-            char*      end = nullptr;
-            const long v   = std::strtol(s, &end, 10);
-            if (end != s && v > 0 && v < 100000)
-                return v;
-        }
-        return -1;
-    };
-
-#ifdef _WIN32
-    // Try the visible window height of the current console.
-    if (HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE); h != nullptr && h != INVALID_HANDLE_VALUE) {
-        CONSOLE_SCREEN_BUFFER_INFO csbi{};
-        if (GetConsoleScreenBufferInfo(h, &csbi)) {
-            int win_rows = static_cast<int>(csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
-            if (win_rows > 0)
-                return win_rows;
-
-            if (csbi.dwSize.Y > 0)
-                return static_cast<int>(csbi.dwSize.Y);
-        }
-    }
-
-    int r = envLines();
-    return (r > 0) ? r : 24;
-
-#else
-    winsize ws{};
-
-    if (isatty(STDOUT_FILENO) && ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_row > 0)
-        return ws.ws_row;
-
-    if (isatty(STDIN_FILENO) && ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_row > 0)
-        return ws.ws_row;
-
-    const int r = envLines();
-    return (r > 0) ? r : 24;
-#endif
 }
 
 // Heat color

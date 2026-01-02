@@ -382,7 +382,6 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board,
             this->seldepth = thisThread.seldepth;
             this->score    = score;
             this->pv       = ss->pv;
-            this->moveHistory.push({ sp.time.elapsed(), ss->pv.moves[0] });
             searchLock.unlock();
         }
 
@@ -395,8 +394,6 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board,
         this->seldepth = thisThread.seldepth;
         this->score    = score;
         this->pv       = ss->pv;
-        if (currDepth > 1 && ss->pv.moves[0] != this->moveHistory.back().second)
-            this->moveHistory.push({ sp.time.elapsed(), ss->pv.moves[0] });
         searchLock.unlock();
 
 

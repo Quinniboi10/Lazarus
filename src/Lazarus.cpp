@@ -10,8 +10,6 @@
 #include "searcher.h"
 #include "types.h"
 
-#include <csignal>
-
 #ifndef EVALFILE
 static_assert(false && "EVALFILE must be defined for network embedding or loading to work.");
 #endif

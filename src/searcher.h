@@ -23,7 +23,6 @@ struct Searcher {
     usize                               seldepth{};
     i16                                 score{};
     PvList                              pv{};
-    RollingWindow<std::pair<u64, Move>> moveHistory{ static_cast<usize>(std::max<int>(getTerminalRows() - 26, 1)) };
 
     bool doReporting;
 
