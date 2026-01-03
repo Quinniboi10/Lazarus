@@ -335,7 +335,9 @@ void Board::reset() {
     epSquare = NO_SQUARE;
 
     halfMoveClock = 0;
-    fromNull      = false;
+    fullMoveClock = 1;
+
+    fromNull = false;
 
     resetMailbox();
     resetHashes();
