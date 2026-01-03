@@ -366,7 +366,7 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board,
             while (!searchCancelled()) {
                 const i16 alpha = std::max<i32>(this->score - delta, -INF_I16);
                 const i16 beta  = std::min<i32>(this->score + delta, INF_I16);
-                score = search<PV>(board, currDepth, 0, alpha, beta, ss, thisThread, transpositionTable, sl);
+                score           = search<PV>(board, currDepth, 0, alpha, beta, ss, thisThread, transpositionTable, sl);
                 if (score <= alpha || score >= beta)
                     delta = ASP_WIDENING_FACTOR / 1024.0 * delta;
                 else

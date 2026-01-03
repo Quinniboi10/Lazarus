@@ -48,7 +48,7 @@ void Searcher::setThreads(const usize numThreads) {
 void Searcher::reportUci() {
     searchLock.lock();
 
-    const u64 time = std::max<u64>(sp.time.elapsed(), 1);
+    const u64 time  = std::max<u64>(sp.time.elapsed(), 1);
     const u64 nodes = totalNodes();
 
     fmt::print("info depth {} seldepth {} time {} nodes {} nps {} hashfull {}", depth, threadData[0].seldepth, time, nodes, nodes * 1000 / time, transpositionTable.hashfull());
@@ -61,7 +61,7 @@ void Searcher::reportUci() {
     else
         fmt::print("cp {}", scaleEval(score, currentBoard));
 
-    const auto [ w, d, l ] = getWDL(currentBoard, score);
+    const auto [w, d, l] = getWDL(currentBoard, score);
     fmt::print("wdl {} {} {}", w, d, l);
 
     fmt::print(" pv");
@@ -75,7 +75,7 @@ void Searcher::reportUci() {
 void Searcher::reportPrettyPrint() {
     searchLock.lock();
 
-    const u64 time = std::max<u64>(sp.time.elapsed(), 1);
+    const u64 time  = std::max<u64>(sp.time.elapsed(), 1);
     const u64 nodes = totalNodes();
 
     cursor::cache();
@@ -100,7 +100,7 @@ void Searcher::reportPrettyPrint() {
     fmt::print(fmt::fg(fmt::color::gray), "{:>4}    ", fmt::format("{}%", transpositionTable.hashfull() / 10));
 
     // WDL
-    const auto [ w, d, l ] = getWDL(currentBoard, score);
+    const auto [w, d, l] = getWDL(currentBoard, score);
     fmt::print(fmt::fg(fmt::rgb(105, 215, 105)), "W: ");
     fmt::print(fmt::fg(fmt::color::gray), "{:>4}    ", fmt::format("{:.1f}%", w / 10.0));
     fmt::print(fmt::fg(fmt::rgb(155, 155, 155)), "D: ");

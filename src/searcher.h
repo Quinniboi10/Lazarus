@@ -5,6 +5,7 @@
 #include "ttable.h"
 
 #include <barrier>
+#include <mutex>
 #include <thread>
 
 struct Searcher {
@@ -17,12 +18,12 @@ struct Searcher {
     SearchParams sp;
 
     // Atomic probes to get information from the search
-    std::mutex                          searchLock{};
-    Board                               currentBoard{};
-    usize                               depth{};
-    usize                               seldepth{};
-    i16                                 score{};
-    PvList                              pv{};
+    std::mutex searchLock{};
+    Board      currentBoard{};
+    usize      depth{};
+    usize      seldepth{};
+    i16        score{};
+    PvList     pv{};
 
     bool doReporting;
 

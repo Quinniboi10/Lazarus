@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <bit>
 #include <cassert>
-#include <cstring>
+#include <numbers>
 #include <sstream>
 #include <string_view>
 #include <vector>
