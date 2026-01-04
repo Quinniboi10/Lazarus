@@ -55,14 +55,13 @@ void Searcher::reportUci() {
 
     fmt::print(" score ");
 
-    if (isDecisive(score)) {
+    if (isDecisive(score))
         fmt::print("mate {}", std::copysign((MATE_SCORE - std::abs(score)) / 2 + 1, score));
-    }
     else
         fmt::print("cp {}", scaleEval(score, currentBoard));
 
     const auto [w, d, l] = getWDL(currentBoard, score);
-    fmt::print("wdl {} {} {}", w, d, l);
+    fmt::print(" wdl {} {} {}", w, d, l);
 
     fmt::print(" pv");
     for (const Move m : pv)
@@ -97,16 +96,16 @@ void Searcher::reportPrettyPrint() {
 
     // TT
     fmt::print(fmt::fg(fmt::rgb(105, 200, 215)), "TT: ");
-    fmt::print(fmt::fg(fmt::color::gray), "{:>4}    ", fmt::format("{}%", transpositionTable.hashfull() / 10));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>6}    ", fmt::format("{:.1f}%", transpositionTable.hashfull() / 10.0));
 
     // WDL
     const auto [w, d, l] = getWDL(currentBoard, score);
     fmt::print(fmt::fg(fmt::rgb(105, 215, 105)), "W: ");
-    fmt::print(fmt::fg(fmt::color::gray), "{:>4}    ", fmt::format("{:.1f}%", w / 10.0));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>6}    ", fmt::format("{:.1f}%", w / 10.0));
     fmt::print(fmt::fg(fmt::rgb(155, 155, 155)), "D: ");
-    fmt::print(fmt::fg(fmt::color::gray), "{:>4}    ", fmt::format("{:.1f}%", d / 10.0));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>6}    ", fmt::format("{:.1f}%", d / 10.0));
     fmt::print(fmt::fg(fmt::rgb(215, 105, 105)), "L: ");
-    fmt::print(fmt::fg(fmt::color::gray), "{:>4}    ", fmt::format("{:.1f}%", l / 10.0));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>6}    ", fmt::format("{:.1f}%", l / 10.0));
 
     // Score
     fmt::print(fmt::fg(fmt::color::gray), "{:>12}    ", getColoredScore(scaleEval(score, currentBoard)));

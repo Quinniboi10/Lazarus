@@ -4,7 +4,6 @@
 #include <bit>
 #include <cassert>
 #include <cstdint>
-#include <deque>
 #include <iostream>
 #include <string>
 
@@ -91,8 +90,7 @@ inline Square& operator+=(Square& s, const Direction d) { return s = s + d; }
 inline Square& operator-=(Square& s, const Direction d) { return s = s - d; }
 //clang-format on
 
-static inline const u16  Le               = 1;
-static inline const bool IS_LITTLE_ENDIAN = *reinterpret_cast<const char*>(&Le) == 1;
+static inline const bool IS_LITTLE_ENDIAN = std::endian::native == std::endian::little;
 
 // Names binary encoding flags from Move class
 enum MoveType {
@@ -190,38 +188,6 @@ class Stack {
       void clear() {
           ptr = 0;
       }
-};
-
-template<typename T>
-struct RollingWindow {
-    std::deque<T> dq;
-    usize maxSize;
-
-    explicit RollingWindow(const usize maxSize) : maxSize(maxSize) {}
-
-    void push(const T& x) {
-        assert(maxSize > 0);
-        if (dq.size() == maxSize)
-            dq.pop_front();
-        dq.push_back(x);
-    }
-
-    void clear() {
-        dq.clear();
-    }
-
-    T& back() { return dq.back(); }
-    const T& back() const { return dq.back(); }
-
-    const T& operator[](const usize i) const { return dq[i]; }
-    T& operator[](const usize i) { return dq[i]; }
-    usize size() const { return dq.size(); }
-    bool full() const { return dq.size() == maxSize; }
-
-    auto begin() { return dq.begin(); }
-    auto begin() const { return dq.begin(); }
-    auto end() { return dq.end(); }
-    auto end() const { return dq.end(); }
 };
 
 namespace internal {

@@ -21,7 +21,7 @@ endif
 
 #Compiler and flags
 CXX      := clang++
-CXXFLAGS := -O3 -fno-finite-math-only -funroll-loops -flto -std=c++20 -DNDEBUG
+CXXFLAGS := -O3 -fno-finite-math-only -flto -std=c++20 -DNDEBUG
 
 # Handle ARM vs x86 builds
 ifeq ($(OS),Windows_NT)
@@ -97,7 +97,7 @@ debug: all
 
 # Debug build
 .PHONY: profile
-profile: CXXFLAGS = -std=c++20 -O3 -g -fno-finite-math-only -funroll-loops -flto -fno-omit-frame-pointer -DNDEBUG
+profile: CXXFLAGS = -std=c++20 -O3 -g -fno-finite-math-only -flto -fno-omit-frame-pointer -DNDEBUG
 profile: all
 
 # Force rebuild
