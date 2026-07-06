@@ -193,6 +193,12 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
                 continue;
             }
 
+            // Late move pruning (LMP)
+            if (!isPV && !board.inCheck() && movesSearched >= LMP_MIN_MOVES + depth * depth && depth <= LMP_MAX_DEPTH && board.isQuiet(m)) {
+	            skipQuiets = true;
+                continue;
+	        }
+
             // SEE pruning
             const i32 seeThreshold = board.isQuiet(m) ? -SEE_QUIET_SCALAR * depth * depth : -SEE_NOISY_SCALAR * depth;
             if (!board.see(m, seeThreshold))
