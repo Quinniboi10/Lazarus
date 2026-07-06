@@ -5,10 +5,10 @@
 #ifdef TUNE
 struct IndividualOption {
     string name;
-    i32    value;
-    i32    min;
-    i32    max;
-    i32    step;
+    i32 value;
+    i32 min;
+    i32 max;
+    i32 step;
 
     IndividualOption(const string& name, i32 value);
 

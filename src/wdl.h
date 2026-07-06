@@ -18,13 +18,13 @@ inline WinRateParams winRateParams(const Board& board) {
     const double m = std::clamp(material, 17, 78) / 58.0;
 
     // Return a = p_a(material) and b = p_b(material), see github.com/official-stockfish/WDL_model
-    constexpr double as[] = { 2177.30347733, -5690.74324009, 4046.88245374, 217.96867263 };
-    constexpr double bs[] = { 65.21635672, 25.03770894, -414.88998313, 719.74678223 };
+    constexpr double as[] = {2177.30347733, -5690.74324009, 4046.88245374, 217.96867263};
+    constexpr double bs[] = {65.21635672, 25.03770894, -414.88998313, 719.74678223};
 
     const double a = (((as[0] * m + as[1]) * m + as[2]) * m) + as[3];
     const double b = (((bs[0] * m + bs[1]) * m + bs[2]) * m) + bs[3];
 
-    return { a, b };
+    return {a, b};
 }
 
 // The win rate model is 1 / (1 + exp((a - eval) / b)), where a = p_a(material) and b = p_b(material).
@@ -64,5 +64,5 @@ inline std::tuple<i16, i16, i16> getWDL(const Board& board, const i16 score) {
         d = 1000 - w - l;
     }
 
-    return { w, d, l };
+    return {w, d, l};
 }

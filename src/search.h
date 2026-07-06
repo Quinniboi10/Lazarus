@@ -13,33 +13,48 @@ struct ThreadStackManager;
 
 struct SearchStack {
     PvList pv{};
-    Move   excluded = Move::null();
-    i16    staticEval{};
+    Move excluded = Move::null();
+    i16 staticEval{};
 
     SearchStack()                         = default;
     SearchStack(const SearchStack& other) = default;
     ~SearchStack()                        = default;
 };
 
-enum class ThreadType { MAIN = 1, SECONDARY = 0 };
-enum NodeType { NONPV, PV };
+enum class ThreadType {
+    MAIN      = 1,
+    SECONDARY = 0
+};
+enum NodeType {
+    NONPV,
+    PV
+};
 
 struct SearchParams {
     Stopwatch<std::chrono::milliseconds> time;
 
     usize depth;
-    u64   nodes;
-    u64   softNodes;
-    u64   mtime;
-    u64   wtime;
-    u64   btime;
-    u64   winc;
-    u64   binc;
+    u64 nodes;
+    u64 softNodes;
+    u64 mtime;
+    u64 wtime;
+    u64 btime;
+    u64 winc;
+    u64 binc;
     usize mate;
 
     SearchParams() = default;
 
-    SearchParams(const Stopwatch<std::chrono::milliseconds>& time, const usize depth, const u64 nodes, const u64 softNodes, const u64 mtime, const u64 wtime, const u64 btime, const u64 winc, const u64 binc, const usize mate) :
+    SearchParams(const Stopwatch<std::chrono::milliseconds>& time,
+                 const usize depth,
+                 const u64 nodes,
+                 const u64 softNodes,
+                 const u64 mtime,
+                 const u64 wtime,
+                 const u64 btime,
+                 const u64 winc,
+                 const u64 binc,
+                 const usize mate) :
         time(time),
         depth(depth),
         nodes(nodes),
@@ -49,18 +64,20 @@ struct SearchParams {
         btime(btime),
         winc(winc),
         binc(binc),
-        mate(mate) {}
+        mate(mate) {
+    }
 };
 
 struct SearchLimit {
     Stopwatch<std::chrono::milliseconds>& time;
-    u64                                   maxNodes;
-    i64                                   searchTime;
+    u64 maxNodes;
+    i64 searchTime;
 
     SearchLimit(auto& time, auto searchTime, auto maxNodes) :
         time(time),
         maxNodes(maxNodes),
-        searchTime(searchTime) {}
+        searchTime(searchTime) {
+    }
 
     bool outOfNodes(const u64 nodes) const {
         return nodes >= maxNodes && maxNodes > 0;

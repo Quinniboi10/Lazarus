@@ -36,10 +36,10 @@ void AccumulatorPair::resetAccumulators(const Board& board) {
 }
 
 void AccumulatorPair::update(const Board& board, const Move m, const PieceType toPT) {
-    const Color     stm   = ~board.stm;
-    const Square    from  = m.from();
-    const Square    to    = m.to();
-    const MoveType  mt    = m.typeOf();
+    const Color stm       = ~board.stm;
+    const Square from     = m.from();
+    const Square to       = m.to();
+    const MoveType mt     = m.typeOf();
     const PieceType pt    = mt == PROMOTION ? PAWN : board.getPiece(to);
     const PieceType endPT = mt == PROMOTION ? m.promo() : pt;
 
@@ -87,7 +87,8 @@ void AccumulatorPair::addSubSub(const Color stm, const Square add, const PieceTy
 }
 
 // Castling
-void AccumulatorPair::addAddSubSub(const Color stm, const Square add1, const PieceType addPT1, const Square add2, const PieceType addPT2, const Square sub1, const PieceType subPT1, const Square sub2, const PieceType subPT2) {
+void AccumulatorPair::addAddSubSub(
+  const Color stm, const Square add1, const PieceType addPT1, const Square add2, const PieceType addPT2, const Square sub1, const PieceType subPT1, const Square sub2, const PieceType subPT2) {
     const usize addW1 = NNUE::feature(WHITE, stm, addPT1, add1);
     const usize addB1 = NNUE::feature(BLACK, stm, addPT1, add1);
 

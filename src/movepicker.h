@@ -18,9 +18,9 @@ inline int evaluateMove(const Board& board, const ThreadData& thisThread, const 
 
 template<MovegenMode mode>
 struct Movepicker {
-    MoveList        moves;
+    MoveList moves;
     array<int, 256> moveScores;
-    u16             seen;
+    u16 seen;
 
     Movepicker(const Board& board, const ThreadData& thisThread, const Move ttMove) {
         moves = Movegen::generateMoves<mode>(board);
@@ -33,8 +33,8 @@ struct Movepicker {
     }
 
     [[nodiscard]] usize findNext() {
-        usize best      = seen;
-        int   bestScore = moveScores[seen];
+        usize best    = seen;
+        int bestScore = moveScores[seen];
 
         for (usize i = seen + 1; i < moves.length; i++) {
             if (moveScores[i] > bestScore) {

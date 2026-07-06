@@ -1,0 +1,8 @@
+CompileFlags:
+  Compiler: clang++
+  Add: [-std=c++23]
+
+Diagnostics:
+  ClangTidy:
+    Add:
+      - performance-unnecessary-value-param

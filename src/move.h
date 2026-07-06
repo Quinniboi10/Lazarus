@@ -35,7 +35,7 @@ class Move {
     Move(const string& strIn, const Board& board);
 
     constexpr static Move null() {
-        return { a1, a1, STANDARD_MOVE };
+        return {a1, a1, STANDARD_MOVE};
     }
 
 
@@ -73,7 +73,7 @@ class Move {
 
 struct MoveEvaluation {
     Move move;
-    i16  eval;
+    i16 eval;
 
     MoveEvaluation()                            = default;
     MoveEvaluation(const MoveEvaluation& other) = default;
@@ -86,7 +86,7 @@ struct MoveEvaluation {
 
 struct PvList {
     array<Move, MAX_PLY> moves;
-    u32                  length = 0;
+    u32 length = 0;
 
     PvList()                    = default;
     PvList(const PvList& other) = default;
@@ -124,7 +124,7 @@ struct PvList {
 
 struct MoveList {
     array<Move, 256> moves;
-    usize            length = 0;
+    usize length = 0;
 
     MoveList() = default;
 

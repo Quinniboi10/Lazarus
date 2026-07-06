@@ -11,15 +11,15 @@ constexpr i32 MAX_CORRHIST  = 1024;
 constexpr i32 CORRHIST_SIZE = 16384;
 
 // ************ SEARCH ************
-constexpr usize MAX_PLY     = 255;
-constexpr i16   BENCH_DEPTH = 9;
+constexpr usize MAX_PLY   = 255;
+constexpr i16 BENCH_DEPTH = 9;
 
 inline usize MOVE_OVERHEAD = 20;
 
 // ************ NNUE ************
-constexpr i16    QA             = 255;
-constexpr i16    QB             = 64;
-constexpr i16    EVAL_SCALE     = 400;
+constexpr i16 QA                = 255;
+constexpr i16 QB                = 64;
+constexpr i16 EVAL_SCALE        = 400;
 constexpr size_t HL_SIZE        = 1024;
 constexpr size_t OUTPUT_BUCKETS = 8;
 

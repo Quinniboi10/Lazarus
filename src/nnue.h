@@ -21,7 +21,7 @@ struct NNUE {
 
     void loadNetwork(const string& filepath);
 
-    int  forwardPass(const Board* board, const AccumulatorPair& accumulators) const;
+    int forwardPass(const Board* board, const AccumulatorPair& accumulators) const;
     void showBuckets(const Board* board, const AccumulatorPair& accumulators) const;
 
     i16 evaluate(const Board& board, const ThreadData& thisThread) const;

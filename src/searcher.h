@@ -11,19 +11,19 @@
 struct Searcher {
     TranspositionTable transpositionTable;
 
-    std::atomic<bool>        stopFlag{ true };
-    std::vector<ThreadData>  threadData;
+    std::atomic<bool> stopFlag{true};
+    std::vector<ThreadData> threadData;
     std::vector<std::thread> threads;
 
     SearchParams sp;
 
     // Atomic probes to get information from the search
     std::mutex searchLock{};
-    Board      currentBoard{};
-    usize      depth{};
-    usize      seldepth{};
-    i16        score{};
-    PvList     pv{};
+    Board currentBoard{};
+    usize depth{};
+    usize seldepth{};
+    i16 score{};
+    PvList pv{};
 
     bool doReporting;
 

@@ -8,11 +8,11 @@
 #include <vector>
 
 struct Transposition {
-    u64  key;
+    u64 key;
     Move move;
-    i16  score;
-    u8   flag;
-    u8   depth;
+    i16 score;
+    u8 flag;
+    u8 depth;
 
     Transposition() {
         key   = 0;
@@ -101,7 +101,7 @@ class TranspositionTable {
 
     usize hashfull() const {
         const usize samples = std::min<u64>(1000, size);
-        usize       hits    = 0;
+        usize hits          = 0;
         for (usize sample = 0; sample < samples; sample++)
             hits += table[sample].key != 0;
         const usize hash = hits * 1000.0 / samples;

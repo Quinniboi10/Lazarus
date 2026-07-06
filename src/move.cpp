@@ -4,22 +4,31 @@
 
 Move::Move(const string& strIn, const Board& board) {
     const Square from = parseSquare(strIn.substr(0, 2));
-    Square       to   = parseSquare(strIn.substr(2, 2));
+    Square to         = parseSquare(strIn.substr(2, 2));
 
     MoveType flags = STANDARD_MOVE;
 
     // Move must be promotion
     if (strIn.size() > 4) {
         switch (strIn.at(4)) {
-        case 'q': *this = Move(from, to, QUEEN); return;
-        case 'r': *this = Move(from, to, ROOK); return;
-        case 'b': *this = Move(from, to, BISHOP); return;
-        default:  *this = Move(from, to, KNIGHT); return;
+            case 'q':
+                *this = Move(from, to, QUEEN);
+                return;
+            case 'r':
+                *this = Move(from, to, ROOK);
+                return;
+            case 'b':
+                *this = Move(from, to, BISHOP);
+                return;
+            default:
+                *this = Move(from, to, KNIGHT);
+                return;
         }
     }
 
-    if (!chess960 && ((from == e1 && to == g1 && board.canCastle(WHITE, true)) || (from == e1 && to == c1 && board.canCastle(WHITE, false)) || (from == e8 && to == g8 && board.canCastle(BLACK, true)) ||
-                      (from == e8 && to == c8 && board.canCastle(BLACK, false)))) {
+    if (!chess960
+        && ((from == e1 && to == g1 && board.canCastle(WHITE, true)) || (from == e1 && to == c1 && board.canCastle(WHITE, false)) || (from == e8 && to == g8 && board.canCastle(BLACK, true))
+            || (from == e8 && to == c8 && board.canCastle(BLACK, false)))) {
         const bool kingside = to > from;
 
         to = board.castleSq(board.stm, kingside);
@@ -50,11 +59,20 @@ string Move::toString() const {
         return moveStr;
 
     switch (promo()) {
-    case KNIGHT: moveStr += 'n'; break;
-    case BISHOP: moveStr += 'b'; break;
-    case ROOK:   moveStr += 'r'; break;
-    case QUEEN:  moveStr += 'q'; break;
-    default:     break;
+        case KNIGHT:
+            moveStr += 'n';
+            break;
+        case BISHOP:
+            moveStr += 'b';
+            break;
+        case ROOK:
+            moveStr += 'r';
+            break;
+        case QUEEN:
+            moveStr += 'q';
+            break;
+        default:
+            break;
     }
 
     return moveStr;

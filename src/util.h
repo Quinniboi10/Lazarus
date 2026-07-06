@@ -80,7 +80,7 @@ inline IntType readLittleEndian(std::istream& stream) {
     if (IS_LITTLE_ENDIAN)
         stream.read(reinterpret_cast<char*>(&result), sizeof(IntType));
     else {
-        std::uint8_t                  u[sizeof(IntType)];
+        std::uint8_t u[sizeof(IntType)];
         std::make_unsigned_t<IntType> v = 0;
 
         stream.read(reinterpret_cast<char*>(u), sizeof(IntType));
@@ -154,7 +154,7 @@ inline void printBitboard(const u64 bitboard) {
     for (int rank = 7; rank >= 0; --rank) {
         cout << "+---+---+---+---+---+---+---+---+" << endl;
         for (int file = 0; file < 8; ++file) {
-            const int  i            = rank * 8 + file;  // Map rank and file to bitboard index
+            const int i             = rank * 8 + file;  // Map rank and file to bitboard index
             const char currentPiece = readBit(bitboard, i) ? '1' : ' ';
 
             cout << "| " << currentPiece << " ";
@@ -181,8 +181,8 @@ inline string formatNum(const i64 v) {
 
 // Fancy formats a time
 inline string formatTime(const u64 timeInMS) {
-    long long       seconds = timeInMS / 1000;
-    const long long hours   = seconds / 3600;
+    long long seconds     = timeInMS / 1000;
+    const long long hours = seconds / 3600;
     seconds %= 3600;
     const long long minutes = seconds / 60;
     seconds %= 60;
@@ -248,12 +248,22 @@ inline u64 parseSuffixedNum(string text) {
         text.erase(text.size() - 1);
 
         switch (suffix) {
-        case 'k': multiplier = 1'000.0; break;
-        case 'm': multiplier = 1'000'000.0; break;
-        case 'b':
-        case 'g': multiplier = 1'000'000'000.0; break;
-        case 't': multiplier = 1'000'000'000'000.0; break;
-        default:  cerr << "Unknown number suffix" << endl; std::abort();
+            case 'k':
+                multiplier = 1'000.0;
+                break;
+            case 'm':
+                multiplier = 1'000'000.0;
+                break;
+            case 'b':
+            case 'g':
+                multiplier = 1'000'000'000.0;
+                break;
+            case 't':
+                multiplier = 1'000'000'000'000.0;
+                break;
+            default:
+                cerr << "Unknown number suffix" << endl;
+                std::abort();
         }
     }
 
@@ -308,7 +318,7 @@ inline void coloredProgBar(const usize length, const float fill) {
 inline string getColoredScore(const int cp) {
     const double wdl      = 2 / (1 + std::pow(std::numbers::e, -(cp / 400.0f))) - 1;
     const double colorWdl = std::clamp(wdl * 1.5f, -1.0, 1.0);
-    u8           r, g, b;
+    u8 r, g, b;
 
     const auto lerp = [](const double a, const double b, const double t) { return a + t * (b - a); };
 
@@ -330,7 +340,7 @@ inline string getColoredScore(const int cp) {
 
 inline string getPrettyPV(const PvList& pv, const usize numToShow = 12, const u8 colorDecay = 10, const u8 minColor = 96) {
     std::ostringstream oss;
-    fmt::rgb           color(255, 255, 255);
+    fmt::rgb color(255, 255, 255);
 
     const usize endIdx = std::min<usize>(numToShow, pv.length);
 

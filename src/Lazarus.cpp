@@ -51,7 +51,7 @@ int main(const int argc, char* argv[]) {
 
     loadDefaultNet(true);
 
-    Board  board;
+    Board board;
     string command;
 
     board.reset();
@@ -60,7 +60,7 @@ int main(const int argc, char* argv[]) {
 
     const auto getValueFollowing = [&](const string& str, const string& value, const auto& defaultValue) {
         std::istringstream ss(str);
-        string             token;
+        string token;
         while (ss >> token) {
             if (token == value) {
                 ss >> token;
@@ -155,8 +155,8 @@ int main(const int argc, char* argv[]) {
             usize softNodes = std::stoi(getValueFollowing(command, "softnodes", 0));
 
             const usize mtime = std::stoi(getValueFollowing(command, "movetime", 0));
-            const i64   wtime = std::stoi(getValueFollowing(command, "wtime", 0));
-            const i64   btime = std::stoi(getValueFollowing(command, "btime", 0));
+            const i64 wtime   = std::stoi(getValueFollowing(command, "wtime", 0));
+            const i64 btime   = std::stoi(getValueFollowing(command, "btime", 0));
 
             const usize winc = std::stoi(getValueFollowing(command, "winc", 0));
             const usize binc = std::stoi(getValueFollowing(command, "binc", 0));

@@ -26,7 +26,7 @@ std::pair<Board, ThreadStackManager> ThreadData::makeMove(const Board& board, co
     accumulatorStack.push(accumulatorStack.top());
     accumulatorStack.topAsReference().update(newBoard, m, board.getPiece(m.to()));
 
-    return { std::piecewise_construct, std::forward_as_tuple(std::move(newBoard)), std::forward_as_tuple(*this) };
+    return {std::piecewise_construct, std::forward_as_tuple(std::move(newBoard)), std::forward_as_tuple(*this)};
 }
 
 std::pair<Board, ThreadStackManager> ThreadData::makeNullMove(const Board& board) {
@@ -35,7 +35,7 @@ std::pair<Board, ThreadStackManager> ThreadData::makeNullMove(const Board& board
 
     accumulatorStack.push(accumulatorStack.top());
 
-    return { std::piecewise_construct, std::forward_as_tuple(std::move(newBoard)), std::forward_as_tuple(*this) };
+    return {std::piecewise_construct, std::forward_as_tuple(std::move(newBoard)), std::forward_as_tuple(*this)};
 }
 
 void ThreadData::refresh(const Board& b) {

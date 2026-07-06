@@ -1,9 +1,9 @@
 template<MovegenMode mode>
 void Movegen::pawnMoves(const Board& board, MoveList& moves) {
-    const u64       pawns        = board.pieces(board.stm, PAWN);
-    const Direction pushDir      = board.stm == WHITE ? NORTH : SOUTH;
-    u64             singlePushes = shift(pushDir, pawns) & ~board.pieces();
-    u64             pushPromo    = singlePushes & (MASK_RANK[RANK1] | MASK_RANK[RANK8]);
+    const u64 pawns         = board.pieces(board.stm, PAWN);
+    const Direction pushDir = board.stm == WHITE ? NORTH : SOUTH;
+    u64 singlePushes        = shift(pushDir, pawns) & ~board.pieces();
+    u64 pushPromo           = singlePushes & (MASK_RANK[RANK1] | MASK_RANK[RANK8]);
     singlePushes ^= pushPromo;
 
     u64 doublePushes = shift(pushDir, singlePushes) & ~board.pieces();
@@ -74,7 +74,7 @@ void Movegen::pawnMoves(const Board& board, MoveList& moves) {
     }
 
     while (eastPromo) {
-        Square       to   = popLSB(eastPromo);
+        Square to         = popLSB(eastPromo);
         const Square from = to - backshift;
 
         addPromos(from, to);

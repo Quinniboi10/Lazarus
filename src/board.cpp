@@ -16,8 +16,8 @@ const auto [PIECE_ZTABLE, EP_ZTABLE, STM_ZHASH, CASTLING_ZTABLE] = []() {
     std::mt19937_64 engine(69420);
 
     MultiArray<u64, 2, 6, 64> pieceTable;
-    array<u64, 65>            epTable;
-    array<u64, 16>            castlingTable;
+    array<u64, 65> epTable;
+    array<u64, 16> castlingTable;
 
     // Fill Piece Table
     for (auto& stm : pieceTable)
@@ -45,8 +45,8 @@ const auto [PIECE_ZTABLE, EP_ZTABLE, STM_ZHASH, CASTLING_ZTABLE] = []() {
 char Board::getPieceAsChar(const Square sq) const {
     if (getPiece(sq) == NO_PIECE_TYPE)
         return ' ';
-    constexpr char whiteSymbols[] = { 'P', 'N', 'B', 'R', 'Q', 'K' };
-    constexpr char blackSymbols[] = { 'p', 'n', 'b', 'r', 'q', 'k' };
+    constexpr char whiteSymbols[] = {'P', 'N', 'B', 'R', 'Q', 'K'};
+    constexpr char blackSymbols[] = {'p', 'n', 'b', 'r', 'q', 'k'};
     if (((1ULL << sq) & byColor[WHITE]) != 0)
         return whiteSymbols[getPiece(sq)];
     return blackSymbols[getPiece(sq)];
@@ -117,8 +117,8 @@ void Board::removePiece(const Color c, const Square sq) {
 void Board::resetMailbox() {
     mailbox.fill(NO_PIECE_TYPE);
     for (u8 i = 0; i < 64; i++) {
-        PieceType& sq   = mailbox[i];
-        const u64  mask = 1ULL << i;
+        PieceType& sq  = mailbox[i];
+        const u64 mask = 1ULL << i;
         if (mask & pieces(PAWN))
             sq = PAWN;
         else if (mask & pieces(KNIGHT))
@@ -172,7 +172,7 @@ void Board::resetHashes() {
 void Board::updateCheckPin() {
     const u64 occ = pieces();
 
-    const u64    kingBB = pieces(stm, KING);
+    const u64 kingBB    = pieces(stm, KING);
     const Square kingSq = getLSB(kingBB);
 
     const u64 ourPieces         = pieces(stm);
@@ -182,7 +182,7 @@ void Board::updateCheckPin() {
     // Direct attacks for potential checks
     const u64 rookChecks   = Movegen::getRookAttacks(kingSq, occ) & enemyRookQueens;
     const u64 bishopChecks = Movegen::getBishopAttacks(kingSq, occ) & enemyBishopQueens;
-    u64       checks       = rookChecks | bishopChecks;
+    u64 checks             = rookChecks | bishopChecks;
     checkMask              = 0;  // If no checks, will be set to all 1s later.
 
     // *** KNIGHT ATTACKS ***
@@ -212,7 +212,7 @@ void Board::updateCheckPin() {
     // ****** PIN STUFF HERE ******
     const u64 rookXrays   = Movegen::getXrayRookAttacks(kingSq, occ, ourPieces) & enemyRookQueens;
     const u64 bishopXrays = Movegen::getXrayBishopAttacks(kingSq, occ, ourPieces) & enemyBishopQueens;
-    u64       pinners     = rookXrays | bishopXrays;
+    u64 pinners           = rookXrays | bishopXrays;
     pinnersPerC[stm]      = pinners;
 
     pinned = 0;
@@ -274,8 +274,8 @@ u64 Board::pieces(const Color c, const PieceType pt1, const PieceType pt2) const
 }
 
 u64 Board::attackersTo(const Square sq, const u64 occ) const {
-    return (Movegen::getRookAttacks(sq, occ) & pieces(ROOK, QUEEN)) | (Movegen::getBishopAttacks(sq, occ) & pieces(BISHOP, QUEEN)) | (Movegen::pawnAttackBB(WHITE, sq) & pieces(BLACK, PAWN)) | (Movegen::pawnAttackBB(BLACK, sq) & pieces(WHITE, PAWN)) |
-           (Movegen::KNIGHT_ATTACKS[sq] & pieces(KNIGHT)) | (Movegen::KING_ATTACKS[sq] & pieces(KING));
+    return (Movegen::getRookAttacks(sq, occ) & pieces(ROOK, QUEEN)) | (Movegen::getBishopAttacks(sq, occ) & pieces(BISHOP, QUEEN)) | (Movegen::pawnAttackBB(WHITE, sq) & pieces(BLACK, PAWN))
+         | (Movegen::pawnAttackBB(BLACK, sq) & pieces(WHITE, PAWN)) | (Movegen::KNIGHT_ATTACKS[sq] & pieces(KNIGHT)) | (Movegen::KING_ATTACKS[sq] & pieces(KING));
 }
 
 // Estimates the key after a move, ignores EP and castling
@@ -285,9 +285,9 @@ u64 Board::roughKeyAfter(const Move m) const {
     if (m.isNull())
         return key;
 
-    const Square    from     = m.from();
-    const Square    to       = m.to();
-    const MoveType  mt       = m.typeOf();
+    const Square from        = m.from();
+    const Square to          = m.to();
+    const MoveType mt        = m.typeOf();
     const PieceType pt       = getPiece(from);
     const PieceType endPT    = mt == PROMOTION ? m.promo() : pt;
     const PieceType targetPT = getPiece(to);
@@ -330,7 +330,7 @@ void Board::reset() {
 
 
     stm      = WHITE;
-    castling = { a8, h8, a1, h1 };
+    castling = {a8, h8, a1, h1};
 
     epSquare = NO_SQUARE;
 
@@ -343,7 +343,7 @@ void Board::reset() {
     resetHashes();
     updateCheckPin();
 
-    posHistory = { fullHash };
+    posHistory = {fullHash};
 }
 
 
@@ -361,8 +361,8 @@ void Board::loadFromFEN(const string& fen) {
 
     int currIdx = 56;
 
-    constexpr char whitePieces[6] = { 'P', 'N', 'B', 'R', 'Q', 'K' };
-    constexpr char blackPieces[6] = { 'p', 'n', 'b', 'r', 'q', 'k' };
+    constexpr char whitePieces[6] = {'P', 'N', 'B', 'R', 'Q', 'K'};
+    constexpr char blackPieces[6] = {'p', 'n', 'b', 'r', 'q', 'k'};
 
     for (const string& rank : rankTokens) {
         for (const char c : rank) {
@@ -432,7 +432,7 @@ void Board::loadFromFEN(const string& fen) {
     resetHashes();
     updateCheckPin();
 
-    posHistory = { fullHash };
+    posHistory = {fullHash};
 }
 
 string Board::fen() const {
@@ -443,7 +443,7 @@ string Board::fen() const {
         usize empty = 0;
         for (usize file = 0; file < 8; file++) {
             const Square sq = toSquare(static_cast<Rank>(rank), static_cast<File>(file));
-            const char   pc = getPieceAsChar(sq);
+            const char pc   = getPieceAsChar(sq);
             if (pc == ' ')
                 empty++;
             else {
@@ -517,13 +517,13 @@ void Board::move(const Move m) {
     fullHash ^= hashCastling();
     fullHash ^= EP_ZTABLE[epSquare];
 
-    epSquare             = NO_SQUARE;
-    fromNull             = false;
-    const Square    from = m.from();
-    const Square    to   = m.to();
-    const MoveType  mt   = m.typeOf();
-    const PieceType pt   = getPiece(from);
-    PieceType       toPT = NO_PIECE_TYPE;
+    epSquare           = NO_SQUARE;
+    fromNull           = false;
+    const Square from  = m.from();
+    const Square to    = m.to();
+    const MoveType mt  = m.typeOf();
+    const PieceType pt = getPiece(from);
+    PieceType toPT     = NO_PIECE_TYPE;
 
     removePiece(stm, pt, from);
     if (isCapture(m)) {
@@ -542,31 +542,34 @@ void Board::move(const Move m) {
     }
 
     switch (mt) {
-    case STANDARD_MOVE:
-        placePiece(stm, pt, to);
-        if (pt == PAWN && (to + 16 == from || to - 16 == from) && (pieces(~stm, PAWN) & (shift<EAST>((1ULL << to) & ~MASK_FILE[HFILE]) | shift<WEST>((1ULL << to) & ~MASK_FILE[AFILE]))))  // Only set EP square if it could be taken
-            epSquare = stm == WHITE ? from + NORTH : from + SOUTH;
-        break;
-    case EN_PASSANT:
-        removePiece(~stm, PAWN, to + (stm == WHITE ? SOUTH : NORTH));
-        placePiece(stm, pt, to);
-        break;
-    case CASTLE:
-        assert(getPiece(to) == ROOK);
-        removePiece(stm, ROOK, to);
-        {
-            const Rank r = rankOf(from);
-            if (from < to) {  // Kingside
-                placePiece(stm, KING, toSquare(r, GFILE));
-                placePiece(stm, ROOK, toSquare(r, FFILE));
+        case STANDARD_MOVE:
+            placePiece(stm, pt, to);
+            if (pt == PAWN && (to + 16 == from || to - 16 == from)
+                && (pieces(~stm, PAWN) & (shift<EAST>((1ULL << to) & ~MASK_FILE[HFILE]) | shift<WEST>((1ULL << to) & ~MASK_FILE[AFILE]))))  // Only set EP square if it could be taken
+                epSquare = stm == WHITE ? from + NORTH : from + SOUTH;
+            break;
+        case EN_PASSANT:
+            removePiece(~stm, PAWN, to + (stm == WHITE ? SOUTH : NORTH));
+            placePiece(stm, pt, to);
+            break;
+        case CASTLE:
+            assert(getPiece(to) == ROOK);
+            removePiece(stm, ROOK, to);
+            {
+                const Rank r = rankOf(from);
+                if (from < to) {  // Kingside
+                    placePiece(stm, KING, toSquare(r, GFILE));
+                    placePiece(stm, ROOK, toSquare(r, FFILE));
+                }
+                else {  // Queenside
+                    placePiece(stm, KING, toSquare(r, CFILE));
+                    placePiece(stm, ROOK, toSquare(r, DFILE));
+                }
             }
-            else {  // Queenside
-                placePiece(stm, KING, toSquare(r, CFILE));
-                placePiece(stm, ROOK, toSquare(r, DFILE));
-            }
-        }
-        break;
-    case PROMOTION: placePiece(stm, m.promo(), to); break;
+            break;
+        case PROMOTION:
+            placePiece(stm, m.promo(), to);
+            break;
     }
 
     assert(popcount(pieces(WHITE, KING)) == 1);
@@ -649,7 +652,7 @@ bool Board::isLegal(const Move m) {
         if (pinned & (1ULL << m.to()))
             return false;
 
-        const Rank   r         = rankOf(m.from());
+        const Rank r           = rankOf(m.from());
         const Square kingEndSq = toSquare(r, kingside ? GFILE : CFILE);
         const Square rookEndSq = toSquare(r, kingside ? FFILE : DFILE);
 
@@ -667,7 +670,7 @@ bool Board::isLegal(const Move m) {
         return true;
     }
 
-    u64&         king   = byPieces[KING];
+    u64& king           = byPieces[KING];
     const Square kingSq = getLSB(king & byColor[stm]);
 
     // King moves
@@ -777,10 +780,10 @@ bool Board::see(const Move m, const int threshold) const {
     if (swap <= 0)
         return true;
 
-    u64   occ       = pieces() ^ (1ULL << from) ^ (1ULL << to);
-    Color stm       = this->stm;
-    u64   attackers = attackersTo(to, occ);
-    u64   bb;
+    u64 occ       = pieces() ^ (1ULL << from) ^ (1ULL << to);
+    Color stm     = this->stm;
+    u64 attackers = attackersTo(to, occ);
+    u64 bb;
 
     int res = 1;
 
@@ -852,7 +855,7 @@ bool Board::see(const Move m, const int threshold) const {
 // Print the board
 string Board::toString(const Move m) const {
     std::ostringstream os;
-    const auto         printInfo = [&](const usize line) {
+    const auto printInfo = [&](const usize line) {
         std::ostringstream ss;
         if (line == 1)
             ss << "FEN: " << fen();

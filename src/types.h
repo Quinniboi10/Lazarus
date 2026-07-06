@@ -32,14 +32,25 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
-enum Color : int { WHITE = 1, BLACK = 0 };
+enum Color : int {
+    WHITE = 1,
+    BLACK = 0
+};
 
 //Inverts the color (WHITE -> BLACK) and (BLACK -> WHITE)
 constexpr Color operator~(const Color c) {
     return static_cast<Color>(c ^ 1);
 }
 
-enum PieceType : int { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NO_PIECE_TYPE };
+enum PieceType : int {
+    PAWN,
+    KNIGHT,
+    BISHOP,
+    ROOK,
+    QUEEN,
+    KING,
+    NO_PIECE_TYPE
+};
 
 // clang-format off
 enum Square : int {

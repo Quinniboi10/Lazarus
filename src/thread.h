@@ -11,9 +11,11 @@ struct HistoryEntry {
     i32 value;
 
     HistoryEntry() :
-        value(0) {}
+        value(0) {
+    }
     HistoryEntry(const i32 v) :
-        value(v) {}
+        value(v) {
+    }
 
     operator i32() const {
         return value;
@@ -47,7 +49,7 @@ struct ThreadData {
     std::atomic<bool>& breakFlag;
 
     std::atomic<u64> nodes;
-    usize            seldepth;
+    usize seldepth;
 
     ThreadData(ThreadType type, std::atomic<bool>& breakFlag);
 
@@ -93,7 +95,8 @@ struct ThreadStackManager {
     ThreadData& thisThread;
 
     explicit ThreadStackManager(ThreadData& thisThread) :
-        thisThread(thisThread) {}
+        thisThread(thisThread) {
+    }
 
     ThreadStackManager(const ThreadStackManager& other) = delete;
 

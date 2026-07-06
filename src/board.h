@@ -4,8 +4,8 @@
 #include "types.h"
 #include "util.h"
 
-constexpr array<Square, 4> ROOK_CASTLE_END_SQ = { d8, f8, d1, f1 };
-constexpr array<Square, 4> KING_CASTLE_END_SQ = { c8, g8, c1, g1 };
+constexpr array<Square, 4> ROOK_CASTLE_END_SQ = {d8, f8, d1, f1};
+constexpr array<Square, 4> KING_CASTLE_END_SQ = {c8, g8, c1, g1};
 
 struct Board {
     // Index is based on square, returns the piece type
@@ -22,9 +22,9 @@ struct Board {
     // History of positions
     std::vector<u64> posHistory;
 
-    bool          doubleCheck;
-    u64           checkMask;
-    u64           pinned;
+    bool doubleCheck;
+    u64 checkMask;
+    u64 pinned;
     array<u64, 2> pinnersPerC;
 
 
@@ -79,12 +79,12 @@ struct Board {
 
     void reset();
 
-    void   loadFromFEN(const string& fen);
+    void loadFromFEN(const string& fen);
     string fen() const;
 
     PieceType getPiece(Square sq) const;
-    bool      isCapture(Move m) const;
-    bool      isQuiet(Move m) const;
+    bool isCapture(Move m) const;
+    bool isQuiet(Move m) const;
 
     void move(Move m);
     void move(const string& str);
