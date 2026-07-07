@@ -126,6 +126,10 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         return ttScore;
     }
 
+    // Internal iterative reductions (IIR)
+    if (ss->excluded.isNull() && (ttEntry.key != board.fullHash || ttEntry.move.isNull()) && depth > 5)
+        depth--;
+
     ss->staticEval = thisThread.correctStaticEval(board, nnue.evaluate(board, thisThread));
 
     // Has the current position improving since last time stm played

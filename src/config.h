@@ -12,7 +12,7 @@ constexpr i32 CORRHIST_SIZE = 16384;
 
 // ************ SEARCH ************
 constexpr usize MAX_PLY   = 255;
-constexpr i16 BENCH_DEPTH = 9;
+constexpr i16 BENCH_DEPTH = 10;
 
 inline usize MOVE_OVERHEAD = 20;
 
