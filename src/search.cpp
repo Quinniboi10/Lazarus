@@ -150,6 +150,9 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         }
     }
 
+    // Clear the conthist segment
+    ss->conthist = nullptr;
+
     bool skipQuiets = false;
 
     MoveList badQuiets{};
@@ -204,6 +207,9 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             if (!board.see(m, seeThreshold))
                 continue;
         }
+
+        // Setup conthist
+        ss->conthist = thisThread.getConthistSegment(board, m);
 
         movesSearched++;
 
@@ -264,10 +270,13 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
 
             // Update histories
             const i32 historyBonus = (HIST_BONUS_A * depth * depth + HIST_BONUS_B * depth + HIST_BONUS_C) / 1024;
-            if (board.isQuiet(m))
+            if (board.isQuiet(m)) {
                 thisThread.getHistory(board, m).update(historyBonus);
+                thisThread.updateConthist(ss, board, m, historyBonus);
+            }
             else
                 thisThread.getCaptureHistory(board, m).update(historyBonus);
+
             for (const Move badQuiet : badQuiets)
                 thisThread.getHistory(board, badQuiet).update(-historyBonus);
             for (const Move badNoisy : badNoisies)

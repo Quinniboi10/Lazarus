@@ -1,31 +1,11 @@
 #pragma once
 
 #include "accumulator.h"
+#include "history.h"
 #include "search.h"
 #include "types.h"
 
 #include <utility>
-
-template<i32 MAX_VALUE>
-struct HistoryEntry {
-    i32 value;
-
-    HistoryEntry() :
-        value(0) {
-    }
-    HistoryEntry(const i32 v) :
-        value(v) {
-    }
-
-    operator i32() const {
-        return value;
-    }
-
-    void update(const i32 bonus) {
-        const i32 clampedBonus = std::clamp<i32>(bonus, -MAX_VALUE, MAX_VALUE);
-        value += clampedBonus - value * abs(clampedBonus) / MAX_VALUE;
-    }
-};
 
 struct ThreadData {
     // History is indexed [stm][from][to]
@@ -37,6 +17,9 @@ struct ThreadData {
 
     // Pawn correction history indexed [stm][pawn key % size]
     MultiArray<HistoryEntry<MAX_CORRHIST>, 2, CORRHIST_SIZE> pawnCorrhist;
+    
+    // Conthist is indexed [last stm][last pt][last to][stm][pt][to]
+    MultiArray<ConthistSegment, 2, 6, 64> conthist;
 
     // Major correction history indexed [stm][major key % size]
     MultiArray<HistoryEntry<MAX_CORRHIST>, 2, CORRHIST_SIZE> majorCorrhist;
@@ -68,6 +51,13 @@ struct ThreadData {
     }
     auto& getCaptureHistory(const Board& b, const Move m) const {
         return capthist[b.stm][b.getPiece(m.from())][b.getPiece(m.to())][m.to()];
+    }
+    ConthistSegment* getConthistSegment(const Board& b, const Move m) {
+        return &conthist[b.stm][b.getPiece(m.from())][m.to()];
+    }
+    void updateConthist(const SearchStack* ss, const Board& b, const Move m, const int bonus) {
+        if ((ss - 1)->conthist != nullptr)
+            (*(ss - 1)->conthist)[b.stm][b.getPiece(m.from())][m.to()].update(bonus);
     }
     void updateCorrhist(const Board& b, const i16 depth, const i16 score, const i16 eval) {
         const i32 bonus = std::clamp<i32>((score - eval) * depth / 8, -MAX_CORRHIST / 4, MAX_CORRHIST / 4);

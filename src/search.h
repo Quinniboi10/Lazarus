@@ -3,6 +3,7 @@
 #include "board.h"
 #include "config.h"
 #include "stopwatch.h"
+#include "history.h"
 #include "types.h"
 
 #include <cstring>
@@ -15,6 +16,7 @@ struct SearchStack {
     PvList pv{};
     Move excluded = Move::null();
     i16 staticEval{};
+    ConthistSegment* conthist = nullptr;
 
     SearchStack()                         = default;
     SearchStack(const SearchStack& other) = default;
