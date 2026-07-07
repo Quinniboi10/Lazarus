@@ -277,8 +277,10 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             else
                 thisThread.getCaptureHistory(board, m).update(historyBonus);
 
-            for (const Move badQuiet : badQuiets)
+            for (const Move badQuiet : badQuiets) {
                 thisThread.getHistory(board, badQuiet).update(-historyBonus);
+                thisThread.updateConthist(ss, board, badQuiet, -historyBonus);
+            }
             for (const Move badNoisy : badNoisies)
                 thisThread.getCaptureHistory(board, badNoisy).update(-historyBonus);
 
