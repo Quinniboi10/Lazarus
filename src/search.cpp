@@ -45,7 +45,11 @@ i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadData
     if (bestScore > alpha)
         alpha = bestScore;
 
+    Transposition& ttEntry = thisThread.tt.getEntry(board.fullHash);
+
     i16 futilityScore = bestScore + QS_FUTILITY_MARGIN;
+    Move bestMove     = Move::null();
+    TTFlag ttFlag     = FAIL_LOW;
 
     Movepicker<NOISY_ONLY> picker(board, thisThread, Move::null());
     while (picker.hasNext()) {
@@ -67,20 +71,31 @@ i16 qsearch(Board& board, const usize ply, i16 alpha, const i16 beta, ThreadData
 
         const i16 score = -qsearch<isPV>(newBoard, ply + 1, -beta, -alpha, thisThread);
 
-        if (score >= beta)
-            return score;
         if (score > bestScore) {
             bestScore = score;
-            if (score > alpha)
+            if (score > alpha) {
+                ttFlag = EXACT;
+                bestMove = m;
                 alpha = score;
+            }
+        }
+        if (score >= beta) {
+            ttFlag = BETA_CUTOFF;
+            break;
         }
     }
+
+    Transposition newEntry = Transposition(board.fullHash, ttFlag == FAIL_LOW ? ttEntry.move : bestMove, ttFlag, bestScore, 0);
+
+    if (thisThread.tt.shouldReplace(ttEntry, newEntry))
+        ttEntry = newEntry;
+
 
     return bestScore;
 }
 // Main search
 template<NodeType isPV>
-i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, SearchStack* ss, ThreadData& thisThread, TranspositionTable& tt, SearchLimit& sl) {
+i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, SearchStack* ss, ThreadData& thisThread, SearchLimit& sl) {
     if (depth + static_cast<i16>(ply) > static_cast<i16>(MAX_PLY))
         depth = MAX_PLY - ply;
     if constexpr (isPV)
@@ -110,7 +125,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
     TTFlag ttFlag = FAIL_LOW;
 
     // TT probing
-    Transposition& ttEntry = tt.getEntry(board.fullHash);
+    Transposition& ttEntry = thisThread.tt.getEntry(board.fullHash);
     const bool ttHit       = ss->excluded.isNull() && ttEntry.key == board.fullHash;
 
     if (!isPV && ttHit && ttEntry.depth >= depth
@@ -143,7 +158,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             const i16 reduction = NMP_DEPTH_REDUCTION;
 
             auto [newBoard, threadManager] = thisThread.makeNullMove(board);
-            const i16 score                = -search<NONPV>(newBoard, depth - reduction, ply + 1, -beta, -beta + 1, ss + 1, thisThread, tt, sl);
+            const i16 score                = -search<NONPV>(newBoard, depth - reduction, ply + 1, -beta, -beta + 1, ss + 1, thisThread, sl);
 
             if (score >= beta)
                 return score;
@@ -183,7 +198,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         movesSeen++;
 
         // TT prefetching
-        tt.prefetch(board.roughKeyAfter(m));
+        thisThread.tt.prefetch(board.roughKeyAfter(m));
 
         // Moveloop pruning
         if (ply > 0 && !isLoss(bestScore)) {
@@ -214,7 +229,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             const i32 sDepth = (depth - 1) / 2;
 
             ss->excluded    = m;
-            const i32 score = search<NONPV>(board, sDepth, ply, sBeta - 1, sBeta, ss, thisThread, tt, sl);
+            const i32 score = search<NONPV>(board, sDepth, ply, sBeta - 1, sBeta, ss, thisThread, sl);
             ss->excluded    = Move::null();
 
             if (score < sBeta) {
@@ -239,15 +254,15 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
             // Late move reduction (LMR)
             const i16 depthReduction = lmrTable[board.isQuiet(m)][depth][movesSearched] + !isPV * LMR_NONPV;
 
-            score = -search<NONPV>(newBoard, newDepth - depthReduction / 1024, ply + 1, -alpha - 1, -alpha, ss + 1, thisThread, tt, sl);
+            score = -search<NONPV>(newBoard, newDepth - depthReduction / 1024, ply + 1, -alpha - 1, -alpha, ss + 1, thisThread, sl);
 
             if (score > alpha)
-                score = -search<NONPV>(newBoard, newDepth, ply + 1, -alpha - 1, -alpha, ss + 1, thisThread, tt, sl);
+                score = -search<NONPV>(newBoard, newDepth, ply + 1, -alpha - 1, -alpha, ss + 1, thisThread, sl);
         }
         else if (!isPV || movesSearched > 1)
-            score = -search<NONPV>(newBoard, newDepth, ply + 1, -alpha - 1, -alpha, ss + 1, thisThread, tt, sl);
+            score = -search<NONPV>(newBoard, newDepth, ply + 1, -alpha - 1, -alpha, ss + 1, thisThread, sl);
         if (isPV && (movesSearched == 1 || score > alpha))
-            score = -search<PV>(newBoard, newDepth, ply + 1, -beta, -alpha, ss + 1, thisThread, tt, sl);
+            score = -search<PV>(newBoard, newDepth, ply + 1, -beta, -alpha, ss + 1, thisThread, sl);
 
         if (score > bestScore) {
             bestScore = score;
@@ -308,7 +323,7 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
         // Update TT
         const Transposition newEntry(board.fullHash, bestMove, ttFlag, ttScore, depth);
 
-        if (tt.shouldReplace(ttEntry, newEntry))
+        if (thisThread.tt.shouldReplace(ttEntry, newEntry))
             ttEntry = newEntry;
     }
 
@@ -366,14 +381,14 @@ MoveEvaluation Searcher::iterativeDeepening(ThreadData& thisThread, Board board,
 
         i16 score;
         if (currDepth < MIN_ASP_WINDOW_DEPTH)
-            score = search<PV>(board, currDepth, 0, -INF_I16, INF_I16, ss, thisThread, transpositionTable, sl);
+            score = search<PV>(board, currDepth, 0, -INF_I16, INF_I16, ss, thisThread, sl);
         else {
             int delta = INITIAL_ASP_WINDOW;
 
             while (!searchCancelled()) {
                 const i16 alpha = std::max<i32>(this->score - delta, -INF_I16);
                 const i16 beta  = std::min<i32>(this->score + delta, INF_I16);
-                score           = search<PV>(board, currDepth, 0, alpha, beta, ss, thisThread, transpositionTable, sl);
+                score           = search<PV>(board, currDepth, 0, alpha, beta, ss, thisThread, sl);
                 if (score <= alpha || score >= beta)
                     delta = ASP_WIDENING_FACTOR / 1024.0 * delta;
                 else

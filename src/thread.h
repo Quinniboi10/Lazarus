@@ -2,6 +2,7 @@
 
 #include "accumulator.h"
 #include "search.h"
+#include "ttable.h"
 #include "types.h"
 
 #include <utility>
@@ -46,12 +47,13 @@ struct ThreadData {
 
     ThreadType type;
 
+    TranspositionTable& tt;
     std::atomic<bool>& breakFlag;
 
     std::atomic<u64> nodes;
     usize seldepth;
 
-    ThreadData(ThreadType type, std::atomic<bool>& breakFlag);
+    ThreadData(ThreadType type, TranspositionTable& tt, std::atomic<bool>& breakFlag);
 
     // Copy constructor
     ThreadData(const ThreadData& other);

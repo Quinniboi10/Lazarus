@@ -1,8 +1,9 @@
 #include "thread.h"
 #include <tuple>
 
-ThreadData::ThreadData(const ThreadType type, std::atomic<bool>& breakFlag) :
+ThreadData::ThreadData(const ThreadType type, TranspositionTable& tt, std::atomic<bool>& breakFlag) :
     type(type),
+    tt(tt),
     breakFlag(breakFlag) {
     breakFlag.store(false, std::memory_order_relaxed);
 
@@ -14,6 +15,7 @@ ThreadData::ThreadData(const ThreadData& other) :
     history(other.history),
     accumulatorStack(other.accumulatorStack),
     type(other.type),
+    tt(other.tt),
     breakFlag(other.breakFlag),
     seldepth(other.seldepth) {
     nodes.store(other.nodes.load(std::memory_order_relaxed), std::memory_order_relaxed);

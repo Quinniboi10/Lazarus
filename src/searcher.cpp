@@ -39,10 +39,10 @@ void Searcher::waitUntilFinished() {
 
 void Searcher::setThreads(const usize numThreads) {
     threadData.clear();
-    threadData.emplace_back(ThreadType::MAIN, stopFlag);
+    threadData.emplace_back(ThreadType::MAIN, transpositionTable, stopFlag);
 
     for (usize i = 1; i < numThreads; i++)
-        threadData.emplace_back(ThreadType::SECONDARY, stopFlag);
+        threadData.emplace_back(ThreadType::SECONDARY, transpositionTable, stopFlag);
 }
 
 void Searcher::reportUci() {
