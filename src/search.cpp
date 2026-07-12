@@ -223,6 +223,9 @@ i16 search(Board& board, i16 depth, const usize ply, i16 alpha, i16 beta, Search
                 else
                     extension = 1;
             }
+            // Multicut
+            else if (sBeta >= beta)
+                return sBeta;
             // Negative extensions
             else if (ttEntry.score >= beta)
                 extension = -2;
