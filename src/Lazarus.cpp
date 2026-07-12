@@ -3,6 +3,7 @@
 #include <string>
 
 #include "board.h"
+#include "datagen.h"
 #include "move.h"
 #include "movegen.h"
 #include "nnue.h"
@@ -84,6 +85,8 @@ int main(const int argc, char* argv[]) {
 
         if (args[1] == "bench")
             bench();
+        else if (args[1].substr(0, 7) == "genfens")
+            datagen::genFens(args[1]);
         else if (args[1] == "tune-config") {
 #ifdef TUNE
             printTuneOB();
