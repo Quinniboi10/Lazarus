@@ -168,7 +168,7 @@ int main(const int argc, char* argv[]) {
 
             if (use_soft_nodes && hard_nodes) {
                 soft_nodes = hard_nodes;
-                hard_nodes = 0;
+                hard_nodes = hard_nodes * 200;  // Hard limit to prevent huge search explosions
             }
 
             searcher.start(board, SearchParams(command_time, depth, hard_nodes, soft_nodes, mtime, wtime, btime, winc, binc, mate));
