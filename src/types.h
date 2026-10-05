@@ -192,7 +192,7 @@ class Stack {
           assert(ptr > 0);
           return underlying[ptr - 1];
       }
-      Type& topAsReference() {
+      Type& top_as_ref() {
           assert(ptr > 0);
           return underlying[ptr - 1];
       }

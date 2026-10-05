@@ -33,24 +33,24 @@ INCBIN(EVAL, EVALFILE);
 #endif
 
 NNUE nnue;
-bool chess960          = false;
-bool nodesAreSoftNodes = false;
+bool chess960       = false;
+bool use_soft_nodes = false;
 
 // ****** MAIN ENTRY POINT, HANDLES UCI ******
 int main(const int argc, char* argv[]) {
-    Movegen::initializeAllDatabases();
+    movegen::init_databases();
 
-    auto loadDefaultNet = [&]([[maybe_unused]] bool warnMSVC = false) {
+    auto load_default_net = [&]([[maybe_unused]] bool warn_msvc = false) {
 #if defined(_MSC_VER) && !defined(__clang__) && defined(EVALFILE)
-        nnue.loadNetwork(EVALFILE);
-        if (warnMSVC)
+        nnue.load_net(EVALFILE);
+        if (warn_msvc)
             cerr << "WARNING: This file was compiled with MSVC, this means that an nnue was NOT embedded into the exe." << endl;
 #else
         nnue = *reinterpret_cast<const NNUE*>(gEVALData);
 #endif
     };
 
-    loadDefaultNet(true);
+    load_default_net(true);
 
     Board board;
     string command;
@@ -59,7 +59,7 @@ int main(const int argc, char* argv[]) {
 
     Searcher searcher(true);
 
-    const auto getValueFollowing = [&](const string& str, const string& value, const auto& defaultValue) {
+    const auto get_value_following = [&](const string& str, const string& value, const auto& default_value) {
         std::istringstream ss(str);
         string token;
         while (ss >> token) {
@@ -69,9 +69,9 @@ int main(const int argc, char* argv[]) {
             }
         }
 
-        std::ostringstream defaultSS;
-        defaultSS << defaultValue;
-        return defaultSS.str();
+        std::ostringstream default_ss;
+        default_ss << default_value;
+        return default_ss.str();
     };
 
 
@@ -86,10 +86,10 @@ int main(const int argc, char* argv[]) {
         if (args[1] == "bench")
             bench();
         else if (args[1].substr(0, 7) == "genfens")
-            datagen::genFens(args[1]);
+            datagen::gen_fens(args[1]);
         else if (args[1] == "tune-config") {
 #ifdef TUNE
-            printTuneOB();
+            print_tune_info();
 #endif
         }
         return 0;
@@ -100,13 +100,13 @@ int main(const int argc, char* argv[]) {
     cout << "Lazarus ready" << endl;
     while (true) {
         std::getline(std::cin, command);
-        const Stopwatch<std::chrono::milliseconds> commandTime;
+        const Stopwatch<std::chrono::milliseconds> command_time;
         if (command.empty())
             continue;
         const std::vector<string> tokens = split(command, ' ');
 
         if (command == "uci") {
-            searcher.doUci = true;
+            searcher.do_uci = true;
 
             cout << "id name Lazarus"
 #ifdef GIT_HEAD_COMMIT_ID
@@ -121,12 +121,12 @@ int main(const int argc, char* argv[]) {
             cout << "option name UCI_Chess960 type check default false" << endl;
             cout << "option name Softnodes type check default false" << endl;
 #ifdef TUNE
-            printTuneUCI();
+            print_tune_uci();
 #endif
             cout << "uciok" << endl;
         }
         else if (command == "icu") {
-            searcher.doUci = false;
+            searcher.do_uci = false;
             cout << "koicu" << endl;
         }
         else if (command == "ucinewgame")
@@ -141,9 +141,9 @@ int main(const int argc, char* argv[]) {
                         board.move(tokens[i]);
             }
             else if (tokens[1] == "kiwipete")
-                board.loadFromFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+                board.load_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
             else if (tokens[1] == "fen") {
-                board.loadFromFEN(command.substr(13));
+                board.load_fen(command.substr(13));
                 if (tokens.size() > 8 && tokens[8] == "moves")
                     for (usize i = 9; i < tokens.size(); i++)
                         board.move(tokens[i]);
@@ -152,54 +152,54 @@ int main(const int argc, char* argv[]) {
         else if (tokens[0] == "go") {
             searcher.stop();
 
-            const usize depth = std::stoi(getValueFollowing(command, "depth", MAX_PLY));
+            const usize depth = std::stoi(get_value_following(command, "depth", MAX_PLY));
 
-            usize maxNodes  = std::stoi(getValueFollowing(command, "nodes", 0));
-            usize softNodes = std::stoi(getValueFollowing(command, "softnodes", 0));
+            usize hard_nodes = std::stoi(get_value_following(command, "nodes", 0));
+            usize soft_nodes = std::stoi(get_value_following(command, "softnodes", 0));
 
-            const usize mtime = std::stoi(getValueFollowing(command, "movetime", 0));
-            const i64 wtime   = std::stoi(getValueFollowing(command, "wtime", 0));
-            const i64 btime   = std::stoi(getValueFollowing(command, "btime", 0));
+            const usize mtime = std::stoi(get_value_following(command, "movetime", 0));
+            const i64 wtime   = std::stoi(get_value_following(command, "wtime", 0));
+            const i64 btime   = std::stoi(get_value_following(command, "btime", 0));
 
-            const usize winc = std::stoi(getValueFollowing(command, "winc", 0));
-            const usize binc = std::stoi(getValueFollowing(command, "binc", 0));
+            const usize winc = std::stoi(get_value_following(command, "winc", 0));
+            const usize binc = std::stoi(get_value_following(command, "binc", 0));
 
-            const usize mate = std::stoi(getValueFollowing(command, "mate", 0));
+            const usize mate = std::stoi(get_value_following(command, "mate", 0));
 
-            if (nodesAreSoftNodes && maxNodes) {
-                softNodes = maxNodes;
-                maxNodes  = 0;
+            if (use_soft_nodes && hard_nodes) {
+                soft_nodes = hard_nodes;
+                hard_nodes = 0;
             }
 
-            searcher.start(board, SearchParams(commandTime, depth, maxNodes, softNodes, mtime, wtime, btime, winc, binc, mate));
+            searcher.start(board, SearchParams(command_time, depth, hard_nodes, soft_nodes, mtime, wtime, btime, winc, binc, mate));
         }
         else if (tokens[0] == "setoption") {
             if (tokens[2] == "Threads")
-                searcher.setThreads(std::stoull(getValueFollowing(command, "value", 1)));
+                searcher.set_threads(std::stoull(get_value_following(command, "value", 1)));
             else if (tokens[2] == "Hash")
-                searcher.resizeTT(std::stoull(getValueFollowing(command, "value", 16)));
+                searcher.resize_tt(std::stoull(get_value_following(command, "value", 16)));
             else if (tokens[2] == "Move" && tokens[3] == "Overhead")
-                MOVE_OVERHEAD = std::stoi(tokens[findIndexOf(tokens, "value") + 1]);
+                MOVE_OVERHEAD = std::stoi(tokens[get_index(tokens, "value") + 1]);
             else if (tokens[2] == "EvalFile") {
-                const string value = tokens[findIndexOf(tokens, "value") + 1];
+                const string value = tokens[get_index(tokens, "value") + 1];
                 if (value == "internal")
-                    loadDefaultNet();
+                    load_default_net();
                 else
-                    nnue.loadNetwork(value);
+                    nnue.load_net(value);
             }
             else if (tokens[2] == "UCI_Chess960")
-                chess960 = tokens[findIndexOf(tokens, "value") + 1] == "true";
+                chess960 = tokens[get_index(tokens, "value") + 1] == "true";
             else if (tokens[2] == "Softnodes")
-                nodesAreSoftNodes = tokens[findIndexOf(tokens, "value") + 1] == "true";
+                use_soft_nodes = tokens[get_index(tokens, "value") + 1] == "true";
 #ifdef TUNE
             else
-                setTunable(tokens[2], std::stoi(tokens[findIndexOf(tokens, "value") + 1]));
+                set_tunable(tokens[2], std::stoi(tokens[get_index(tokens, "value") + 1]));
 #endif
         }
         else if (command == "stop")
             searcher.stop();
         else if (command == "wait")
-            searcher.waitUntilFinished();
+            searcher.wait_unit_done();
         else if (command == "quit") {
             searcher.stop();
             return 0;
@@ -212,7 +212,7 @@ int main(const int argc, char* argv[]) {
         else if (command == "help")
             cout << "Lazarus is a UCI compatiable chess engine. For a list of commands please refer to the UCI spec." << endl;
         else if (command == "d")
-            cout << board.toString() << endl;
+            cout << board.str() << endl;
         else if (tokens[0] == "move")
             board.move(Move(tokens[1], board));
         else if (tokens[0] == "bulk") {
@@ -220,52 +220,52 @@ int main(const int argc, char* argv[]) {
                 cout << "Usage: bulk <depth>" << endl;
                 continue;
             }
-            Movegen::perft(board, std::stoi(tokens[1]), true);
+            movegen::perft(board, std::stoi(tokens[1]), true);
         }
         else if (tokens[0] == "perft") {
             if (tokens.size() < 2) {
                 cout << "Usage: perft <depth>" << endl;
                 continue;
             }
-            Movegen::perft(board, std::stoi(tokens[1]), false);
+            movegen::perft(board, std::stoi(tokens[1]), false);
         }
         else if (tokens[0] == "perftsuite")
-            Movegen::perftSuite(tokens[1]);
+            movegen::perft_suite(tokens[1]);
         else if (command == "eval") {
-            searcher.threadData[0].refresh(board);
-            cout << "Raw eval: " << nnue.forwardPass(&board, searcher.threadData[0].accumulatorStack.top()) << endl;
-            nnue.showBuckets(&board, searcher.threadData[0].accumulatorStack.top());
+            searcher.thread_data[0].refresh(board);
+            cout << "Raw eval: " << nnue.evaluate(&board, searcher.thread_data[0].accum_stack.top()) << endl;
+            nnue.print_buckets(&board, searcher.thread_data[0].accum_stack.top());
         }
         else if (command == "moves") {
-            for (Move m : Movegen::generateMoves<ALL_MOVES>(board)) {
+            for (Move m : movegen::gen_moves<ALL_MOVES>(board)) {
                 cout << m;
-                if (board.isLegal(m))
+                if (board.is_legal(m))
                     cout << " <- legal" << endl;
                 else
                     cout << " <- illegal" << endl;
             }
         }
         else if (command == "gamestate") {
-            const Square whiteKing = getLSB(board.pieces(WHITE, KING));
-            const Square blackKing = getLSB(board.pieces(BLACK, KING));
-            cout << board.toString() << endl;
-            cout << "Is in check (white): " << board.isUnderAttack(WHITE, whiteKing) << endl;
-            cout << "Is in check (black): " << board.isUnderAttack(BLACK, blackKing) << endl;
-            cout << "En passant square: " << (board.epSquare != NO_SQUARE ? squareToAlgebraic(board.epSquare) : "-") << endl;
-            cout << "Half move clock: " << board.halfMoveClock << endl;
+            const Square white_king = get_lsb(board.pieces(WHITE, KING));
+            const Square black_king = get_lsb(board.pieces(BLACK, KING));
+            cout << board.str() << endl;
+            cout << "Is in check (white): " << board.is_under_attack(WHITE, white_king) << endl;
+            cout << "Is in check (black): " << board.is_under_attack(BLACK, black_king) << endl;
+            cout << "En passant square: " << (board.ep_sq != NO_SQUARE ? sq_to_algebraic(board.ep_sq) : "-") << endl;
+            cout << "Half move clock: " << board.halfmove_ctr << endl;
             cout << "Castling rights: { ";
-            cout << squareToAlgebraic(board.castling[castleIndex(WHITE, true)]) << ", ";
-            cout << squareToAlgebraic(board.castling[castleIndex(WHITE, false)]) << ", ";
-            cout << squareToAlgebraic(board.castling[castleIndex(BLACK, true)]) << ", ";
-            cout << squareToAlgebraic(board.castling[castleIndex(BLACK, false)]);
+            cout << sq_to_algebraic(board.castling[castle_idx(WHITE, true)]) << ", ";
+            cout << sq_to_algebraic(board.castling[castle_idx(WHITE, false)]) << ", ";
+            cout << sq_to_algebraic(board.castling[castle_idx(BLACK, true)]) << ", ";
+            cout << sq_to_algebraic(board.castling[castle_idx(BLACK, false)]);
             cout << " }" << endl;
         }
         else if (command == "incheck")
-            cout << "Stm is " << (board.inCheck() ? "in check" : "NOT in check") << endl;
+            cout << "Stm is " << (board.in_check() ? "in check" : "NOT in check") << endl;
         else if (tokens[0] == "islegal")
-            cout << tokens[1] << " is " << (board.isLegal(Move(tokens[1], board)) ? "" : "not ") << "legal" << endl;
+            cout << tokens[1] << " is " << (board.is_legal(Move(tokens[1], board)) ? "" : "not ") << "legal" << endl;
         else if (tokens[0] == "keyafter")
-            cout << "Expected hash: 0x" << std::hex << std::uppercase << board.roughKeyAfter(Move(tokens[1], board)) << std::dec << endl;
+            cout << "Expected hash: 0x" << std::hex << std::uppercase << board.approx_key_after(Move(tokens[1], board)) << std::dec << endl;
         else if (command == "piececount") {
             cout << "White pawns: " << popcount(board.pieces(WHITE, PAWN)) << endl;
             cout << "White knights: " << popcount(board.pieces(WHITE, KNIGHT)) << endl;

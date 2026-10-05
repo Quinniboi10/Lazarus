@@ -11,4 +11,4 @@ struct UnicodeTerminalInitializer {
     }
 };
 
-static UnicodeTerminalInitializer unicodeTerminalInitializer;
+static UnicodeTerminalInitializer unicode_terminal_initializer;

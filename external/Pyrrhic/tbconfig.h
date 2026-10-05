@@ -46,11 +46,11 @@
 
 #define PYRRHIC_POPCOUNT(x)              (popcount(x))
 #define PYRRHIC_LSB(x)                   (std::countr_zero(x))
-#define PYRRHIC_POPLSB(x)                (static_cast<int>(popLSB(*x)))
+#define PYRRHIC_POPLSB(x)                (static_cast<int>(pop_lsb(*x)))
 
-#define PYRRHIC_PAWN_ATTACKS(sq, c)      (Movegen::pawnAttackBB(static_cast<Color>(c), static_cast<Square>(sq)))
-#define PYRRHIC_KNIGHT_ATTACKS(sq)       (Movegen::KNIGHT_ATTACKS[sq])
-#define PYRRHIC_BISHOP_ATTACKS(sq, occ)  (Movegen::getBishopAttacks(static_cast<Square>(sq), occ))
-#define PYRRHIC_ROOK_ATTACKS(sq, occ)    (Movegen::getRookAttacks(static_cast<Square>(sq), occ))
-#define PYRRHIC_QUEEN_ATTACKS(sq, occ)   (Movegen::getBishopAttacks(static_cast<Square>(sq), occ) | Movegen::getRookAttacks(static_cast<Square>(sq), occ))
-#define PYRRHIC_KING_ATTACKS(sq)         (Movegen::KING_ATTACKS[sq])
+#define PYRRHIC_PAWN_ATTACKS(sq, c)      (movegen::pawn_attack_bb(static_cast<Color>(c), static_cast<Square>(sq)))
+#define PYRRHIC_KNIGHT_ATTACKS(sq)       (movegen::KNIGHT_ATTACKS[sq])
+#define PYRRHIC_BISHOP_ATTACKS(sq, occ)  (movegen::get_bishop_attacks(static_cast<Square>(sq), occ))
+#define PYRRHIC_ROOK_ATTACKS(sq, occ)    (movegen::get_rook_attacks(static_cast<Square>(sq), occ))
+#define PYRRHIC_QUEEN_ATTACKS(sq, occ)   (movegen::get_bishop_attacks(static_cast<Square>(sq), occ) | movegen::get_rook_attacks(static_cast<Square>(sq), occ))
+#define PYRRHIC_KING_ATTACKS(sq)         (movegen::KING_ATTACKS[sq])

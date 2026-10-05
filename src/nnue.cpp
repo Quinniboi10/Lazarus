@@ -44,23 +44,23 @@ i32 NNUE::vectorizedSCReLU(const Accumulator& stm, const Accumulator& nstm, cons
 
     for (usize i = 0; i < HL_SIZE; i += VECTOR_SIZE<i16>) {
         // Load accumulators
-        const Vector<i16> stmAccumValues  = load_ep<i16>(&stm[i]);
-        const Vector<i16> nstmAccumValues = load_ep<i16>(&nstm[i]);
+        const Vector<i16> stm_accum_vals  = load_ep<i16>(&stm[i]);
+        const Vector<i16> nstm_accum_vals = load_ep<i16>(&nstm[i]);
 
         // Clamp values
-        const Vector<i16> stmClamped  = clamp_ep<i16>(stmAccumValues, 0, QA);
-        const Vector<i16> nstmClamped = clamp_ep<i16>(nstmAccumValues, 0, QA);
+        const Vector<i16> stm_clamped  = clamp_ep<i16>(stm_accum_vals, 0, QA);
+        const Vector<i16> nstm_clamped = clamp_ep<i16>(nstm_accum_vals, 0, QA);
 
         // Load weights
-        const Vector<i16> stmWeights  = load_ep<i16>(&weightsToOut[bucket][i]);
-        const Vector<i16> nstmWeights = load_ep<i16>(&weightsToOut[bucket][i + HL_SIZE]);
+        const Vector<i16> stm_weights  = load_ep<i16>(&weights_to_out[bucket][i]);
+        const Vector<i16> nstm_weights = load_ep<i16>(&weights_to_out[bucket][i + HL_SIZE]);
 
         // SCReLU it
-        const Vector<i32> stmActivated  = madd_epi16(stmClamped, mullo_ep(stmClamped, stmWeights));
-        const Vector<i32> nstmActivated = madd_epi16(nstmClamped, mullo_ep(nstmClamped, nstmWeights));
+        const Vector<i32> stm_act  = madd_epi16(stm_clamped, mullo_ep(stm_clamped, stm_weights));
+        const Vector<i32> nstm_act = madd_epi16(nstm_clamped, mullo_ep(nstm_clamped, nstm_weights));
 
-        accumulator = add_ep<i32>(accumulator, stmActivated);
-        accumulator = add_ep<i32>(accumulator, nstmActivated);
+        accumulator = add_ep<i32>(accumulator, stm_act);
+        accumulator = add_ep<i32>(accumulator, nstm_act);
     }
 
     return reduce_ep<i32>(accumulator);
@@ -72,8 +72,8 @@ i32 NNUE::vectorizedSCReLU(const Accumulator& stm, const Accumulator& nstm, cons
 
     #pragma unroll
     for (usize i = 0; i < HL_SIZE; i++) {
-        res += (i32) SCReLU(stm[i]) * weightsToOut[bucket][i];
-        res += (i32) SCReLU(nstm[i]) * weightsToOut[bucket][i + HL_SIZE];
+        res += (i32) SCReLU(stm[i]) * weights_to_out[bucket][i];
+        res += (i32) SCReLU(nstm[i]) * weights_to_out[bucket][i + HL_SIZE];
     }
     return res;
 }
@@ -81,13 +81,13 @@ i32 NNUE::vectorizedSCReLU(const Accumulator& stm, const Accumulator& nstm, cons
 
 // Finds the input feature
 usize NNUE::feature(const Color perspective, const Color color, const PieceType piece, const Square square) {
-    const usize colorIndex  = (perspective == color) ? 0 : 1;
-    const usize squareIndex = (perspective == BLACK) ? flipRank(square) : static_cast<int>(square);
+    const usize color_idx = (perspective == color) ? 0 : 1;
+    const usize sq_idx    = (perspective == BLACK) ? flip_rank(square) : static_cast<int>(square);
 
-    return colorIndex * 64 * 6 + piece * 64 + squareIndex;
+    return color_idx * 64 * 6 + piece * 64 + sq_idx;
 }
 
-void NNUE::loadNetwork(const string& filepath) {
+void NNUE::load_net(const string& filepath) {
     std::ifstream stream(filepath, std::ios::binary);
     if (!stream.is_open()) {
         cerr << "Failed to open file: " + filepath << endl;
@@ -95,35 +95,35 @@ void NNUE::loadNetwork(const string& filepath) {
     }
 
     // Load weightsToHL
-    for (i16& weight : weightsToHL) {
-        weight = readLittleEndian<i16>(stream);
+    for (i16& weight : weights_to_hl) {
+        weight = read_little_endian<i16>(stream);
     }
 
-    // Load hiddenLayerBias
-    for (i16& bias : hiddenLayerBias) {
-        bias = readLittleEndian<i16>(stream);
+    // Load hl_bias
+    for (i16& bias : hl_bias) {
+        bias = read_little_endian<i16>(stream);
     }
 
-    // Load weightsToOut
-    for (auto& i : weightsToOut) {
+    // Load weights_to_out
+    for (auto& i : weights_to_out) {
         for (i16& w : i) {
-            w = readLittleEndian<i16>(stream);
+            w = read_little_endian<i16>(stream);
         }
     }
 
-    // Load outputBias
-    for (i16& b : outputBias) {
-        b = readLittleEndian<i16>(stream);
+    // Load output_bias
+    for (i16& b : output_bias) {
+        b = read_little_endian<i16>(stream);
     }
 }
 
 // Returns the output of the NN
-int NNUE::forwardPass(const Board* board, const AccumulatorPair& accumulators) const {
-    const usize divisor      = 32 / OUTPUT_BUCKETS;
-    const usize outputBucket = (popcount(board->pieces()) - 2) / divisor;
+int NNUE::evaluate(const Board* board, const AccumulatorPair& accumulators) const {
+    const usize divisor       = 32 / OUTPUT_BUCKETS;
+    const usize output_bucket = (popcount(board->pieces()) - 2) / divisor;
 
-    const Accumulator& accumulatorSTM = board->stm == WHITE ? accumulators.white_ : accumulators.black_;
-    const Accumulator& accumulatorOPP = ~board->stm == WHITE ? accumulators.white_ : accumulators.black_;
+    const Accumulator& accum_stm = board->stm == WHITE ? accumulators.white_ : accumulators.black_;
+    const Accumulator& accum_opp = ~board->stm == WHITE ? accumulators.white_ : accumulators.black_;
 
     // Accumulate output for STM and OPP using separate weight segments
     i64 eval = 0;
@@ -132,46 +132,46 @@ int NNUE::forwardPass(const Board* board, const AccumulatorPair& accumulators) c
         for (usize i = 0; i < HL_SIZE; i++) {
             // First HL_SIZE weights are for STM
             if constexpr (ACTIVATION == ::ReLU)
-                eval += ReLU(accumulatorSTM[i]) * weightsToOut[outputBucket][i];
+                eval += ReLU(accum_stm[i]) * weights_to_out[output_bucket][i];
             if constexpr (ACTIVATION == ::CReLU)
-                eval += CReLU(accumulatorSTM[i]) * weightsToOut[outputBucket][i];
+                eval += CReLU(accum_stm[i]) * weights_to_out[output_bucket][i];
 
             // Last HL_SIZE weights are for OPP
             if constexpr (ACTIVATION == ::ReLU)
-                eval += ReLU(accumulatorOPP[i]) * weightsToOut[outputBucket][HL_SIZE + i];
+                eval += ReLU(accum_opp[i]) * weights_to_out[output_bucket][HL_SIZE + i];
             if constexpr (ACTIVATION == ::CReLU)
-                eval += CReLU(accumulatorOPP[i]) * weightsToOut[outputBucket][HL_SIZE + i];
+                eval += CReLU(accum_opp[i]) * weights_to_out[output_bucket][HL_SIZE + i];
         }
     }
     else
-        eval = vectorizedSCReLU(accumulatorSTM, accumulatorOPP, outputBucket);
+        eval = vectorizedSCReLU(accum_stm, accum_opp, output_bucket);
 
 
     // Dequantization
     if constexpr (ACTIVATION == ::SCReLU)
         eval /= QA;
 
-    eval += outputBias[outputBucket];
+    eval += output_bias[output_bucket];
 
     // Apply output bias and scale the result
     return (eval * EVAL_SCALE) / (QA * QB);
 }
 
 // Debug feature based on SF
-void NNUE::showBuckets(const Board* board, const AccumulatorPair& accumulators) const {
-    const usize divisor     = 32 / OUTPUT_BUCKETS;
-    const usize usingBucket = (popcount(board->pieces()) - 2) / divisor;
+void NNUE::print_buckets(const Board* board, const AccumulatorPair& accumulators) const {
+    const usize divisor      = 32 / OUTPUT_BUCKETS;
+    const usize using_bucket = (popcount(board->pieces()) - 2) / divisor;
 
-    int staticEval = 0;
+    int static_eval = 0;
 
     cout << "+------------+------------+" << endl;
     cout << "|   Bucket   | Evaluation |" << endl;
     cout << "+------------+------------+" << endl;
 
-    const Accumulator& accumulatorSTM = board->stm == WHITE ? accumulators.white_ : accumulators.black_;
-    const Accumulator& accumulatorOPP = ~board->stm == WHITE ? accumulators.white_ : accumulators.black_;
+    const Accumulator& accum_stm = board->stm == WHITE ? accumulators.white_ : accumulators.black_;
+    const Accumulator& accum_opp = ~board->stm == WHITE ? accumulators.white_ : accumulators.black_;
 
-    for (usize outputBucket = 0; outputBucket < OUTPUT_BUCKETS; outputBucket++) {
+    for (usize output_bucket = 0; output_bucket < OUTPUT_BUCKETS; output_bucket++) {
         // Accumulate output for STM and OPP using separate weight segments
         i64 eval = 0;
 
@@ -179,46 +179,46 @@ void NNUE::showBuckets(const Board* board, const AccumulatorPair& accumulators) 
             for (usize i = 0; i < HL_SIZE; i++) {
                 // First HL_SIZE weights are for STM
                 if constexpr (ACTIVATION == ::ReLU)
-                    eval += ReLU(accumulatorSTM[i]) * weightsToOut[outputBucket][i];
+                    eval += ReLU(accum_stm[i]) * weights_to_out[output_bucket][i];
                 if constexpr (ACTIVATION == ::CReLU)
-                    eval += CReLU(accumulatorSTM[i]) * weightsToOut[outputBucket][i];
+                    eval += CReLU(accum_stm[i]) * weights_to_out[output_bucket][i];
 
                 // Last HL_SIZE weights are for OPP
                 if constexpr (ACTIVATION == ::ReLU)
-                    eval += ReLU(accumulatorOPP[i]) * weightsToOut[outputBucket][HL_SIZE + i];
+                    eval += ReLU(accum_opp[i]) * weights_to_out[output_bucket][HL_SIZE + i];
                 if constexpr (ACTIVATION == ::CReLU)
-                    eval += CReLU(accumulatorOPP[i]) * weightsToOut[outputBucket][HL_SIZE + i];
+                    eval += CReLU(accum_opp[i]) * weights_to_out[output_bucket][HL_SIZE + i];
             }
         }
         else
-            eval = vectorizedSCReLU(accumulatorSTM, accumulatorOPP, outputBucket);
+            eval = vectorizedSCReLU(accum_stm, accum_opp, output_bucket);
 
 
         // Dequantization
         if constexpr (ACTIVATION == ::SCReLU)
             eval /= QA;
 
-        eval += outputBias[outputBucket];
+        eval += output_bias[output_bucket];
 
         // Apply output bias and scale the result
-        staticEval = (eval * EVAL_SCALE) / (QA * QB);
+        static_eval = (eval * EVAL_SCALE) / (QA * QB);
 
-        fmt::print("| {:<10} |  {:<+8.2f}  |", outputBucket, staticEval / 100.0);
-        if (outputBucket == usingBucket)
+        fmt::print("| {:<10} |  {:<+8.2f}  |", output_bucket, static_eval / 100.0);
+        if (output_bucket == using_bucket)
             cout << " <- Current bucket";
         cout << endl;
-        if (outputBucket == OUTPUT_BUCKETS - 1)
+        if (output_bucket == OUTPUT_BUCKETS - 1)
             cout << "+------------+------------+" << endl;
     }
 }
 
-i16 NNUE::evaluate(const Board& board, const ThreadData& thisThread) const {
+i16 NNUE::evaluate(const Board& board, const ThreadData& this_thread) const {
 #ifndef NDEBUG
-    AccumulatorPair verifAccumulator;
-    verifAccumulator.resetAccumulators(board);
-    if (verifAccumulator != thisThread.accumulatorStack.top())
-        cout << board.toString() << endl;
-    assert(verifAccumulator == thisThread.accumulatorStack.top());
+    AccumulatorPair verif_accum;
+    verif_accum.recompute_all(board);
+    if (verif_accum != this_thread.accum_stack.top())
+        cout << board.str() << endl;
+    assert(verif_accum == this_thread.accum_stack.top());
 #endif
-    return std::clamp<i32>(forwardPass(&board, thisThread.accumulatorStack.top()), MATED_IN_MAX_PLY, MATE_IN_MAX_PLY);
+    return std::clamp<i32>(evaluate(&board, this_thread.accum_stack.top()), MATED_IN_MAX_PLY, MATE_IN_MAX_PLY);
 }

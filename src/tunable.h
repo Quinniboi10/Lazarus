@@ -12,7 +12,7 @@ struct IndividualOption {
 
     IndividualOption(const string& name, i32 value);
 
-    void setValue(const i32 value) {
+    void set_value(const i32 value) {
         this->value = value;
     }
 
@@ -33,7 +33,7 @@ inline IndividualOption::IndividualOption(const string& name, const i32 value) {
     tunables.push_back(this);
 }
 
-static void setTunable(const string& name, const i32 value) {
+static void set_tunable(const string& name, const i32 value) {
     for (const auto& tunable : tunables) {
         if (tunable->name == name) {
             tunable->value = value;
@@ -42,12 +42,12 @@ static void setTunable(const string& name, const i32 value) {
     }
 }
 
-static void printTuneUCI() {
+static void print_tune_uci() {
     for (const auto& tunable : tunables)
         cout << "option name " << tunable->name << " type spin default " << tunable->value << " min " << tunable->min << " max " << tunable->max << endl;
 }
 
-static void printTuneOB() {
+static void print_tune_info() {
     for (const auto& tunable : tunables)
         cout << tunable->name << ", int, " << tunable->value << ", " << tunable->min << ", " << tunable->max << ", " << tunable->step << ", 0.002" << endl;
 }

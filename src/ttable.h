@@ -21,9 +21,9 @@ struct Transposition {
         score = 0;
         depth = 0;
     }
-    Transposition(const u64 key, const Move bestMove, const u8 flag, const i16 score, const u8 depth) {
+    Transposition(const u64 key, const Move best_move, const u8 flag, const i16 score, const u8 depth) {
         this->key   = key;
-        this->move  = bestMove;
+        this->move  = best_move;
         this->flag  = flag;
         this->score = score;
         this->depth = depth;
@@ -36,9 +36,9 @@ class TranspositionTable {
    public:
     u64 size;
 
-    explicit TranspositionTable(const usize sizeInMB = 16) {
+    explicit TranspositionTable(const usize size_mib = 16) {
         table = nullptr;
-        reserve(sizeInMB);
+        reserve(size_mib);
     }
 
     ~TranspositionTable() {
@@ -47,36 +47,36 @@ class TranspositionTable {
     }
 
 
-    void clear(const usize threadCount = 1) {
-        assert(threadCount > 0);
+    void clear(const usize thread_count = 1) {
+        assert(thread_count > 0);
 
         std::vector<std::thread> threads;
 
-        auto clearTT = [&](const usize threadId) {
+        auto clear_tt = [&](const usize thread_id) {
             // The segment length is the number of entries each thread must clear
-            // To find where your thread should start (in entries), you can do threadId * segmentLength
+            // To find where your thread should start (in entries), you can do thread_id * segmentLength
             // Converting segment length into the number of entries to clear can be done via length * bytes per entry
 
-            const usize start = (size * threadId) / threadCount;
-            const usize end   = std::min((size * (threadId + 1)) / threadCount, size);
+            const usize start = (size * thread_id) / thread_count;
+            const usize end   = std::min((size * (thread_id + 1)) / thread_count, size);
 
             std::memset(table + start, 0, (end - start) * sizeof(Transposition));
         };
 
-        for (usize thread = 1; thread < threadCount; thread++)
-            threads.emplace_back(clearTT, thread);
+        for (usize thread = 1; thread < thread_count; thread++)
+            threads.emplace_back(clear_tt, thread);
 
-        clearTT(0);
+        clear_tt(0);
 
         for (std::thread& t : threads)
             if (t.joinable())
                 t.join();
     }
 
-    void reserve(const usize newSizeMiB) {
-        assert(newSizeMiB > 0);
+    void reserve(const usize new_size_mib) {
+        assert(new_size_mib > 0);
         // Find number of bytes allowed
-        size = newSizeMiB * 1024 * 1024 / sizeof(Transposition);
+        size = new_size_mib * 1024 * 1024 / sizeof(Transposition);
         if (table != nullptr)
             std::free(table);
         table = static_cast<Transposition*>(std::malloc(size * sizeof(Transposition)));
@@ -87,15 +87,15 @@ class TranspositionTable {
     }
 
     void prefetch(const u64 key) {
-        __builtin_prefetch(&this->getEntry(key));
+        __builtin_prefetch(&this->get(key));
     }
 
-    Transposition& getEntry(const u64 key) {
+    Transposition& get(const u64 key) {
         return table[index(key)];
     }
 
 
-    bool shouldReplace(const Transposition& entry, const Transposition& newEntry) const {
+    bool should_replace(const Transposition& entry, const Transposition& new_entry) const {
         return true;
     }
 

@@ -9,11 +9,11 @@ MultiArray<u64, 64, 64> LINE;
 MultiArray<u64, 64, 64> LINESEG;
 
 // Magic code from https://github.com/nkarve/surge/blob/master/src/tables.cpp
-constexpr int diagonalOf(const Square s) {
-    return 7 + rankOf(s) - fileOf(s);
+constexpr int diagonal_of(const Square s) {
+    return 7 + rank_of(s) - file_of(s);
 }
-constexpr int antiDiagonalOf(const Square s) {
-    return rankOf(s) + static_cast<Rank>(fileOf(s));
+constexpr int antidiagonal_of(const Square s) {
+    return rank_of(s) + static_cast<Rank>(file_of(s));
 }
 
 //Precomputed diagonal masks
@@ -93,7 +93,7 @@ u64 sliding_attacks(const Square square, const u64 occ, const u64 mask) { return
 
 //Returns rook attacks from a given square, using the Hyperbola Quintessence Algorithm. Only used to initialize
 //the magic lookup table
-u64 get_rook_attacks_for_init(const Square square, const u64 occ) { return sliding_attacks(square, occ, MASK_FILE[fileOf(square)]) | sliding_attacks(square, occ, MASK_RANK[rankOf(square)]); }
+u64 get_rook_attacks_for_init(const Square square, const u64 occ) { return sliding_attacks(square, occ, MASK_FILE[file_of(square)]) | sliding_attacks(square, occ, MASK_RANK[rank_of(square)]); }
 
 u64 ROOK_ATTACK_MASKS[64];
 int ROOK_ATTACK_SHIFTS[64];
@@ -109,10 +109,10 @@ const u64 ROOK_MAGICS[64] = {0x0080001020400080, 0x0040001000200040, 0x008008100
                              0x00FFFCDDFCED714A, 0x007FFCDDFCED714A, 0x003FFFCDFFD88096, 0x0000040810002101, 0x0001000204080011, 0x0001000204000801, 0x0001000082000401, 0x0001FFFAABFAD1A2};
 
 //Initializes the magic lookup table for rooks
-void initializeRookAttacks() {
+void init_rooks() {
     for (Square sq = a1; sq <= h8; sq++) {
-        const u64 edges = ((MASK_RANK[AFILE] | MASK_RANK[HFILE]) & ~MASK_RANK[rankOf(sq)]) | ((MASK_FILE[AFILE] | MASK_FILE[HFILE]) & ~MASK_FILE[fileOf(sq)]);
-        ROOK_ATTACK_MASKS[sq]  = (MASK_RANK[rankOf(sq)] ^ MASK_FILE[fileOf(sq)]) & ~edges;
+        const u64 edges = ((MASK_RANK[AFILE] | MASK_RANK[HFILE]) & ~MASK_RANK[rank_of(sq)]) | ((MASK_FILE[AFILE] | MASK_FILE[HFILE]) & ~MASK_FILE[file_of(sq)]);
+        ROOK_ATTACK_MASKS[sq]  = (MASK_RANK[rank_of(sq)] ^ MASK_FILE[file_of(sq)]) & ~edges;
         ROOK_ATTACK_SHIFTS[sq] = 64 - popcount(ROOK_ATTACK_MASKS[sq]);
 
         u64 subset = 0;
@@ -127,20 +127,20 @@ void initializeRookAttacks() {
 }
 
 //Returns the attacks bitboard for a rook at a given square, using the magic lookup table
-u64 Movegen::getRookAttacks(const Square square, const u64 occ) { return ROOK_ATTACKS[square][((occ & ROOK_ATTACK_MASKS[square]) * ROOK_MAGICS[square]) >> ROOK_ATTACK_SHIFTS[square]]; }
+u64 movegen::get_rook_attacks(const Square square, const u64 occ) { return ROOK_ATTACKS[square][((occ & ROOK_ATTACK_MASKS[square]) * ROOK_MAGICS[square]) >> ROOK_ATTACK_SHIFTS[square]]; }
 
 //Returns the 'x-ray attacks' for a rook at a given square. X-ray attacks cover squares that are not immediately
 //accessible by the rook, but become available when the immediate blockers are removed from the board
-u64 Movegen::getXrayRookAttacks(const Square square, const u64 occ, u64 blockers) {
-    u64 attacks = getRookAttacks(square, occ);
+u64 movegen::get_xray_rook_attacks(const Square square, const u64 occ, u64 blockers) {
+    u64 attacks = get_rook_attacks(square, occ);
     blockers &= attacks;
-    return attacks ^ getRookAttacks(square, occ ^ blockers);
+    return attacks ^ get_rook_attacks(square, occ ^ blockers);
 }
 
 //Returns bishop attacks from a given square, using the Hyperbola Quintessence Algorithm. Only used to initialize
 //the magic lookup table
-u64 getBishopAttacksForInit(const Square square, const u64 occ) {
-    return sliding_attacks(square, occ, MASK_DIAGONAL[diagonalOf(square)]) | sliding_attacks(square, occ, MASK_ANTI_DIAGONAL[antiDiagonalOf(square)]);
+u64 get_bishop_attacks_for_init(const Square square, const u64 occ) {
+    return sliding_attacks(square, occ, MASK_DIAGONAL[diagonal_of(square)]) | sliding_attacks(square, occ, MASK_ANTI_DIAGONAL[antidiagonal_of(square)]);
 }
 
 u64 BISHOP_ATTACK_MASKS[64];
@@ -157,10 +157,10 @@ const u64 BISHOP_MAGICS[64] = {0x0002020202020200, 0x0002020202020000, 0x0004010
                                0x0000104104104000, 0x0000002082082000, 0x0000000020841000, 0x0000000000208800, 0x0000000010020200, 0x0000000404080200, 0x0000040404040400, 0x0002020202020200};
 
 //Initializes the magic lookup table for bishops
-void initializeBishopAttacks() {
+void init_bishop_attacks() {
     for (Square sq = a1; sq <= h8; sq++) {
-        const u64 edges = ((MASK_RANK[AFILE] | MASK_RANK[HFILE]) & ~MASK_RANK[rankOf(sq)]) | ((MASK_FILE[AFILE] | MASK_FILE[HFILE]) & ~MASK_FILE[fileOf(sq)]);
-        BISHOP_ATTACK_MASKS[sq]  = (MASK_DIAGONAL[diagonalOf(sq)] ^ MASK_ANTI_DIAGONAL[antiDiagonalOf(sq)]) & ~edges;
+        const u64 edges = ((MASK_RANK[AFILE] | MASK_RANK[HFILE]) & ~MASK_RANK[rank_of(sq)]) | ((MASK_FILE[AFILE] | MASK_FILE[HFILE]) & ~MASK_FILE[file_of(sq)]);
+        BISHOP_ATTACK_MASKS[sq]  = (MASK_DIAGONAL[diagonal_of(sq)] ^ MASK_ANTI_DIAGONAL[antidiagonal_of(sq)]) & ~edges;
         BISHOP_ATTACK_SHIFTS[sq] = 64 - popcount(BISHOP_ATTACK_MASKS[sq]);
 
         u64 subset = 0;
@@ -168,47 +168,47 @@ void initializeBishopAttacks() {
             u64 index = subset;
             index                     = index * BISHOP_MAGICS[sq];
             index                     = index >> BISHOP_ATTACK_SHIFTS[sq];
-            BISHOP_ATTACKS[sq][index] = getBishopAttacksForInit(sq, subset);
+            BISHOP_ATTACKS[sq][index] = get_bishop_attacks_for_init(sq, subset);
             subset                    = (subset - BISHOP_ATTACK_MASKS[sq]) & BISHOP_ATTACK_MASKS[sq];
         } while (subset);
     }
 }
 
 //Returns the attacks bitboard for a bishop at a given square, using the magic lookup table
-u64 Movegen::getBishopAttacks(const Square square, const u64 occ) { return BISHOP_ATTACKS[square][((occ & BISHOP_ATTACK_MASKS[square]) * BISHOP_MAGICS[square]) >> BISHOP_ATTACK_SHIFTS[square]]; }
+u64 movegen::get_bishop_attacks(const Square square, const u64 occ) { return BISHOP_ATTACKS[square][((occ & BISHOP_ATTACK_MASKS[square]) * BISHOP_MAGICS[square]) >> BISHOP_ATTACK_SHIFTS[square]]; }
 
 //Returns the 'x-ray attacks' for a bishop at a given square. X-ray attacks cover squares that are not immediately
 //accessible by the rook, but become available when the immediate blockers are removed from the board
-u64 Movegen::getXrayBishopAttacks(const Square square, const u64 occ, u64 blockers) {
-    u64 attacks = getBishopAttacks(square, occ);
+u64 movegen::get_xray_bishop_attacks(const Square square, const u64 occ, u64 blockers) {
+    u64 attacks = get_bishop_attacks(square, occ);
     blockers &= attacks;
-    return attacks ^ getBishopAttacks(square, occ ^ blockers);
+    return attacks ^ get_bishop_attacks(square, occ ^ blockers);
 }
 
 u64 SQUARES_BETWEEN_BB[64][64];
 
 //Initializes the lookup table for the bitboard of squares in between two given squares (0 if the
 //two squares are not aligned)
-void initializeSquaresBetween() {
+void init_sqs_between() {
     for (Square sq1 = a1; sq1 <= h8; sq1++)
         for (Square sq2 = a1; sq2 <= h8; sq2++) {
             const u64 sqs = SQUARE_BB[sq1] | SQUARE_BB[sq2];
-            if (fileOf(sq1) == fileOf(sq2) || rankOf(sq1) == rankOf(sq2))
+            if (file_of(sq1) == file_of(sq2) || rank_of(sq1) == rank_of(sq2))
                 SQUARES_BETWEEN_BB[sq1][sq2] = get_rook_attacks_for_init(sq1, sqs) & get_rook_attacks_for_init(sq2, sqs);
-            else if (diagonalOf(sq1) == diagonalOf(sq2) || antiDiagonalOf(sq1) == antiDiagonalOf(sq2))
-                SQUARES_BETWEEN_BB[sq1][sq2] = getBishopAttacksForInit(sq1, sqs) & getBishopAttacksForInit(sq2, sqs);
+            else if (diagonal_of(sq1) == diagonal_of(sq2) || antidiagonal_of(sq1) == antidiagonal_of(sq2))
+                SQUARES_BETWEEN_BB[sq1][sq2] = get_bishop_attacks_for_init(sq1, sqs) & get_bishop_attacks_for_init(sq2, sqs);
         }
 }
 
 //Initializes the lookup table for the bitboard of all squares along the line of two given squares (0 if the
 //two squares are not aligned)
-void initializeLine() {
+void init_line() {
     for (Square sq1 = a1; sq1 <= h8; sq1++) {
         for (Square sq2 = a1; sq2 <= h8; sq2++) {
-            if (fileOf(sq1) == fileOf(sq2) || rankOf(sq1) == rankOf(sq2))
+            if (file_of(sq1) == file_of(sq2) || rank_of(sq1) == rank_of(sq2))
                 LINE[sq1][sq2] = (get_rook_attacks_for_init(sq1, 0) & get_rook_attacks_for_init(sq2, 0)) | SQUARE_BB[sq1] | SQUARE_BB[sq2];
-            else if (diagonalOf(sq1) == diagonalOf(sq2) || antiDiagonalOf(sq1) == antiDiagonalOf(sq2))
-                LINE[sq1][sq2] = (getBishopAttacksForInit(sq1, 0) & getBishopAttacksForInit(sq2, 0)) | SQUARE_BB[sq1] | SQUARE_BB[sq2];
+            else if (diagonal_of(sq1) == diagonal_of(sq2) || antidiagonal_of(sq1) == antidiagonal_of(sq2))
+                LINE[sq1][sq2] = (get_bishop_attacks_for_init(sq1, 0) & get_bishop_attacks_for_init(sq2, 0)) | SQUARE_BB[sq1] | SQUARE_BB[sq2];
         }
     }
 
@@ -219,43 +219,43 @@ void initializeLine() {
                 continue;
             }
             const u64 blockers = (1ULL << sq1) | (1ULL << sq2);
-            if (fileOf(sq1) == fileOf(sq2) || rankOf(sq1) == rankOf(sq2))
+            if (file_of(sq1) == file_of(sq2) || rank_of(sq1) == rank_of(sq2))
                 LINESEG[sq1][sq2] = (get_rook_attacks_for_init(sq1, blockers) & get_rook_attacks_for_init(sq2, blockers)) | SQUARE_BB[sq1] | SQUARE_BB[sq2];
-            else if (diagonalOf(sq1) == diagonalOf(sq2) || antiDiagonalOf(sq1) == antiDiagonalOf(sq2))
-                LINESEG[sq1][sq2] = (getBishopAttacksForInit(sq1, blockers) & getBishopAttacksForInit(sq2, blockers)) | SQUARE_BB[sq1] | SQUARE_BB[sq2];
+            else if (diagonal_of(sq1) == diagonal_of(sq2) || antidiagonal_of(sq1) == antidiagonal_of(sq2))
+                LINESEG[sq1][sq2] = (get_bishop_attacks_for_init(sq1, blockers) & get_bishop_attacks_for_init(sq2, blockers)) | SQUARE_BB[sq1] | SQUARE_BB[sq2];
         }
     }
 }
 
 //Initializes lookup tables for rook moves, bishop moves, in-between squares, aligned squares and pseudolegal moves
-void Movegen::initializeAllDatabases() {
-    initializeRookAttacks();
-    initializeBishopAttacks();
-    initializeSquaresBetween();
-    initializeLine();
+void movegen::init_databases() {
+    init_rooks();
+    init_bishop_attacks();
+    init_sqs_between();
+    init_line();
 }
 
-u64 Movegen::pawnAttackBB(const Color c, const Square sq) {
+u64 movegen::pawn_attack_bb(const Color c, const Square sq) {
     assert(sq >= a1);
     assert(sq < NO_SQUARE);
 
-    const u64 sqBB = 1ULL << sq;
+    const u64 sq_bb = 1ULL << sq;
     if (c == WHITE) {
-        return shift<NORTH_EAST>(sqBB & ~MASK_FILE[HFILE]) | shift<NORTH_WEST>(sqBB & ~MASK_FILE[AFILE]);
+        return shift<NORTH_EAST>(sq_bb & ~MASK_FILE[HFILE]) | shift<NORTH_WEST>(sq_bb & ~MASK_FILE[AFILE]);
     }
-    return shift<SOUTH_EAST>(sqBB & ~MASK_FILE[HFILE]) | shift<SOUTH_WEST>(sqBB & ~MASK_FILE[AFILE]);
+    return shift<SOUTH_EAST>(sq_bb & ~MASK_FILE[HFILE]) | shift<SOUTH_WEST>(sq_bb & ~MASK_FILE[AFILE]);
 }
 
 u64 bulk(Board& board, const usize depth) {
     u64 nodes = 0;
 
-    MoveList moves = Movegen::generateMoves<ALL_MOVES>(board);
+    MoveList moves = movegen::gen_moves<ALL_MOVES>(board);
 
     if (depth == 0)
         return 1;
 
     for (const Move m : moves) {
-        if (!board.isLegal(m))
+        if (!board.is_legal(m))
             continue;
 
         if (depth == 1) {
@@ -263,31 +263,31 @@ u64 bulk(Board& board, const usize depth) {
             continue;
         }
 
-        Board testBoard = board;
+        Board test_board = board;
 
-        testBoard.move(m);
-        nodes += bulk(testBoard, depth - 1);
+        test_board.move(m);
+        nodes += bulk(test_board, depth - 1);
     }
 
     return nodes;
 }
 
-u64 multithreadBulk(Board& board, usize depth) {
+u64 multithread_bulk(Board& board, usize depth) {
     std::atomic<u64> nodes(0);
 
-    MoveList moves = Movegen::generateMoves<ALL_MOVES>(board);
+    MoveList moves = movegen::gen_moves<ALL_MOVES>(board);
 
     if (depth == 0)
         return 1;
 
     std::vector<std::thread> threads;
 
-    auto runThread = [&](Board board, const usize depth) {
+    auto run_thread = [&](Board board, const usize depth) {
         nodes += bulk(board, depth);
     };
 
     for (const Move m : moves) {
-        if (!board.isLegal(m))
+        if (!board.is_legal(m))
             continue;
 
         if (depth == 1) {
@@ -295,11 +295,11 @@ u64 multithreadBulk(Board& board, usize depth) {
             continue;
         }
 
-        Board testBoard = board;
+        Board test_board = board;
 
-        testBoard.move(m);
+        test_board.move(m);
 
-        threads.emplace_back(runThread, testBoard, depth - 1);
+        threads.emplace_back(run_thread, test_board, depth - 1);
     }
 
     for (std::thread& t : threads)
@@ -313,23 +313,23 @@ u64 perft(Board& board, const usize depth) {
     u64 nodes = 0;
 
     if (VERIFY_BOARD_HASH) {
-        const u64 fullHash = board.fullHash;
-        const u64 pawnHash = board.pawnHash;
-        const u64 majorHash = board.majorHash;
-        board.resetHashes();
-        if (fullHash != board.fullHash) {
+        const u64 full_hash = board.full_hash;
+        const u64 pawn_hash = board.pawn_hash;
+        const u64 major_hash = board.major_hash;
+        board.reset_hashes();
+        if (full_hash != board.full_hash) {
             cerr << "FULL HASH CHECKS FAILED" << endl;
-            cerr << board.toString() << endl;
+            cerr << board.str() << endl;
             std::exit(1);
         }
-        if (pawnHash != board.pawnHash) {
+        if (pawn_hash != board.pawn_hash) {
             cerr << "PAWN HASH CHECKS FAILED" << endl;
-            cerr << board.toString() << endl;
+            cerr << board.str() << endl;
             std::exit(1);
         }
-        if (majorHash != board.majorHash) {
+        if (major_hash != board.major_hash) {
             cerr << "MAJOR HASH CHECKS FAILED" << endl;
-            cerr << board.toString() << endl;
+            cerr << board.str() << endl;
             std::exit(1);
         }
     }
@@ -337,81 +337,81 @@ u64 perft(Board& board, const usize depth) {
     if (depth == 0)
         return 1;
 
-    const MoveList moves = Movegen::generateMoves<ALL_MOVES>(board);
+    const MoveList moves = movegen::gen_moves<ALL_MOVES>(board);
 
     for (const Move m : moves) {
-        if (!board.isLegal(m))
+        if (!board.is_legal(m))
             continue;
 
-        Board testBoard = board;
+        Board test_board = board;
 
-        testBoard.move(m);
+        test_board.move(m);
 
-        if (VERIFY_BOARD_KEYAFTER && !(board.roughKeyAfter(m) == testBoard.fullHash || m.typeOf() == CASTLE || m.typeOf() == EN_PASSANT || board.getPiece(m.from()) == ROOK || board.getPiece(m.to()) == ROOK || board.getPiece(m.from()) == KING)) {
+        if (VERIFY_BOARD_KEYAFTER && !(board.approx_key_after(m) == test_board.full_hash || m.type() == CASTLE || m.type() == EN_PASSANT || board.get_piece(m.from()) == ROOK || board.get_piece(m.to()) == ROOK || board.get_piece(m.from()) == KING)) {
             cerr << "KEYAFTER CHECKS FAILED" << endl;
             std::exit(1);
         }
 
-        nodes += perft(testBoard, depth - 1);
+        nodes += perft(test_board, depth - 1);
     }
 
     return nodes;
 }
 
-void Movegen::perft(Board& board, const usize depth, const bool bulk) {
+void movegen::perft(Board& board, const usize depth, const bool bulk) {
     u64 nodes = 0;
 
-    MoveList moves = generateMoves<ALL_MOVES>(board);
+    MoveList moves = gen_moves<ALL_MOVES>(board);
 
-    u64 nodesThisMove = 0;
+    u64 nodes_this_move = 0;
 
     Stopwatch<std::chrono::milliseconds> stopwatch;
 
     stopwatch.start();
 
     for (Move m : moves) {
-        if (!board.isLegal(m))
+        if (!board.is_legal(m))
             continue;
 
-        Board testBoard = board;
+        Board test_board = board;
 
-        testBoard.move(m);
+        test_board.move(m);
         if (bulk)
-            nodesThisMove = ::bulk(testBoard, depth - 1);
+            nodes_this_move = ::bulk(test_board, depth - 1);
         else
-            nodesThisMove = perft(testBoard, depth - 1);
-        nodes += nodesThisMove;
+            nodes_this_move = perft(test_board, depth - 1);
+        nodes += nodes_this_move;
 
-        cout << m << ": " << nodesThisMove << endl;
+        cout << m << ": " << nodes_this_move << endl;
     }
 
-    const u64 elapsedTime = stopwatch.elapsed();
-    const u64 nps = nodes * 1000 / std::max<u64>(elapsedTime, 1);
+    const u64 elapsed_time = stopwatch.elapsed();
+    const u64 nps = nodes * 1000 / std::max<u64>(elapsed_time, 1);
 
-    cout << "Total nodes: " << formatNum(nodes) << endl;
-    cout << "Time spent (ms): " << elapsedTime << endl;
-    cout << "Nodes per second: " << formatNum(nps) << endl;
+    cout << "Total nodes: " << format_num(nodes) << endl;
+    cout << "Time spent (ms): " << elapsed_time << endl;
+    cout << "Nodes per second: " << format_num(nps) << endl;
     cout << nodes << " nodes " << nps << " nps" << endl;
 }
 
-void Movegen::perftSuite(const string& filePath) {
+void movegen::perft_suite(const string& file_path) {
     Board board;
 
     Stopwatch<std::chrono::milliseconds> sw;
     sw.start();
 
-    std::ifstream file(filePath);
+    std::ifstream file(file_path);
 
     if (!file.is_open()) {
-        cerr << "Failed to open file: " << filePath << endl;
+        cerr << "Failed to open file: " << file_path << endl;
         return;
     }
 
     string ln;
 
-    usize testsDone = 0;
-    usize passedTests = 0;
-    u64 totalNodes = 0;
+    usize tests_done = 0;
+    usize passed_tests = 0;
+    u64 total_nodes = 0;
 
 
     while (std::getline(file, ln)) {
@@ -425,7 +425,7 @@ void Movegen::perftSuite(const string& filePath) {
 
         u64 nodes;
 
-        board.loadFromFEN(tokens[0]);
+        board.load_fen(tokens[0]);
 
         bool passed = true;
         cout << "Testing position: " << tokens[0] << endl;
@@ -436,16 +436,16 @@ void Movegen::perftSuite(const string& filePath) {
             usize depth = stoi(entry[0].substr(1));
             u64 target = stoll(entry[1]);
 
-            nodes = multithreadBulk(board, depth);
+            nodes = multithread_bulk(board, depth);
 
-            totalNodes += nodes;
+            total_nodes += nodes;
 
             bool pass = nodes == target;
             cout << "Depth " << depth << ": Expected " << target << ", Got " << nodes << " -> " << (pass ? "PASS" : "FAIL") << endl;
 
-            testsDone++;
+            tests_done++;
             if (pass)
-                passedTests++;
+                passed_tests++;
             else
                 passed = false;
         }
@@ -453,10 +453,10 @@ void Movegen::perftSuite(const string& filePath) {
         u64 elapsed = sw.elapsed();
         usize nps = nodes * 1000 / elapsed;
 
-        cout << "Time elapsed: " << formatTime(elapsed) << endl;
-        cout << "Found " << formatNum(nodes) << " nodes at " << formatNum(nps) << " nodes per second" << endl;
+        cout << "Time elapsed: " << format_time(elapsed) << endl;
+        cout << "Found " << format_num(nodes) << " nodes at " << format_num(nps) << " nodes per second" << endl;
 
-        cout << "Finished position " << testsDone << endl;
+        cout << "Finished position " << tests_done << endl;
         if (passed)
             cout << "All tests passed for this position." << endl;
         else
@@ -465,20 +465,20 @@ void Movegen::perftSuite(const string& filePath) {
         cout << "----------------------------------------" << endl << endl;
     }
 
-    cout << "Perft Suite Completed: " << passedTests << " / " << testsDone << " tests passed." << endl;
+    cout << "Perft Suite Completed: " << passed_tests << " / " << tests_done << " tests passed." << endl;
     u64 elapsed = sw.elapsed();
-    usize nps = totalNodes * 1000 / elapsed;
+    usize nps = total_nodes * 1000 / elapsed;
 
-    cout << "Time elapsed: " << formatTime(elapsed) << endl;
-    cout << "Found a total of " << formatNum(totalNodes) << " nodes at " << formatNum(nps) << " nodes per second" << endl;
+    cout << "Time elapsed: " << format_time(elapsed) << endl;
+    cout << "Found a total of " << format_num(total_nodes) << " nodes at " << format_num(nps) << " nodes per second" << endl;
 }
 
-MoveList Movegen::generateLegalMoves(Board& board) {
-    MoveList moves = Movegen::generateMoves<ALL_MOVES>(board);
+MoveList movegen::gen_legal_moves(Board& board) {
+    MoveList moves = movegen::gen_moves<ALL_MOVES>(board);
     usize    i     = 0;
 
     while (i < moves.length) {
-        if (!board.isLegal(moves.moves[i])) {
+        if (!board.is_legal(moves.moves[i])) {
             moves.moves[i] = moves.moves[--moves.length];
         }
         else

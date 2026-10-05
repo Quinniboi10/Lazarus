@@ -14,12 +14,12 @@
 #include <string_view>
 #include <vector>
 
-inline bool readBit(const u64 bb, const usize idx) {
+inline bool read_bit(const u64 bb, const usize idx) {
     return (1ULL << idx) & bb;
 }
 
 template<u8 value>
-inline void setBit(u64& bitboard, const usize idx) {
+inline void set_bit(u64& bitboard, const usize idx) {
     assert(idx <= sizeof(u64) * 8);
     if constexpr (value)
         bitboard |= (1ULL << idx);
@@ -27,14 +27,14 @@ inline void setBit(u64& bitboard, const usize idx) {
         bitboard &= ~(1ULL << idx);
 }
 
-inline Square popLSB(u64& bb) {
+inline Square pop_lsb(u64& bb) {
     assert(bb > 0);
     const auto sq = static_cast<Square>(std::countr_zero(bb));
     bb &= bb - 1;
     return sq;
 }
 
-inline Square getLSB(const u64 bb) {
+inline Square get_lsb(const u64 bb) {
     return static_cast<Square>(std::countr_zero(bb));
 }
 
@@ -62,7 +62,7 @@ inline std::vector<string> split(const string& str, const char delim) {
     return result;
 }
 
-inline string mergeFromIndex(const std::vector<string>& arr, const usize n) {
+inline string merge_from_idx(const std::vector<string>& arr, const usize n) {
     std::ostringstream oss;
     for (usize i = n; i < arr.size(); ++i) {
         if (i > n)
@@ -74,7 +74,7 @@ inline string mergeFromIndex(const std::vector<string>& arr, const usize n) {
 
 // Function from stockfish
 template<typename IntType>
-inline IntType readLittleEndian(std::istream& stream) {
+inline IntType read_little_endian(std::istream& stream) {
     IntType result;
 
     if (IS_LITTLE_ENDIAN)
@@ -94,18 +94,18 @@ inline IntType readLittleEndian(std::istream& stream) {
 }
 
 template<typename T, typename U>
-inline void deepFill(T& dest, const U& val) {
+inline void deepfill(T& dest, const U& val) {
     dest = val;
 }
 
 template<typename T, usize N, typename U>
-inline void deepFill(std::array<T, N>& arr, const U& value) {
+inline void deepfill(std::array<T, N>& arr, const U& value) {
     for (auto& element : arr) {
-        deepFill(element, value);
+        deepfill(element, value);
     }
 }
 
-inline i32 getPieceValue(const PieceType pt) {
+inline i32 get_piece_value(const PieceType pt) {
     if (pt == PAWN)
         return PAWN_VALUE;
     if (pt == KNIGHT)
@@ -120,44 +120,44 @@ inline i32 getPieceValue(const PieceType pt) {
 }
 
 
-constexpr Rank rankOf(const Square s) {
+constexpr Rank rank_of(const Square s) {
     return static_cast<Rank>(s >> 3);
 }
-constexpr File fileOf(const Square s) {
+constexpr File file_of(const Square s) {
     return static_cast<File>(s & 0b111);
 }
 
-constexpr Rank flipRank(const Square s) {
+constexpr Rank flip_rank(const Square s) {
     return static_cast<Rank>(s ^ 0b111000);
 }
 
-constexpr Square toSquare(const Rank rank, const File file) {
+constexpr Square to_sq(const Rank rank, const File file) {
     return static_cast<Square>((static_cast<int>(rank) << 3) | file);
 }
 
 // Takes square (h8) and converts it into a bitboard index (64)
-constexpr Square parseSquare(const std::string_view square) {
+constexpr Square parse_sq(const std::string_view square) {
     return static_cast<Square>((square.at(1) - '1') * 8 + (square.at(0) - 'a'));
 }
 
 // Takes a square (64) and converts into algebraic notation (h8)
-inline string squareToAlgebraic(const int sq) {
+inline string sq_to_algebraic(const int sq) {
     return fmt::format("{}{}", static_cast<char>('a' + (sq % 8)), static_cast<char>('1' + (sq / 8)));
 }
 
-constexpr u8 castleIndex(const Color c, const bool kingside) {
+constexpr u8 castle_idx(const Color c, const bool kingside) {
     return c == WHITE ? (kingside ? 3 : 2) : (kingside ? 1 : 0);
 }
 
 // Print a bitboard (for debugging individual bitboards)
-inline void printBitboard(const u64 bitboard) {
+inline void print_bb(const u64 bitboard) {
     for (int rank = 7; rank >= 0; --rank) {
         cout << "+---+---+---+---+---+---+---+---+" << endl;
         for (int file = 0; file < 8; ++file) {
-            const int i             = rank * 8 + file;  // Map rank and file to bitboard index
-            const char currentPiece = readBit(bitboard, i) ? '1' : ' ';
+            const int i              = rank * 8 + file;  // Map rank and file to bitboard index
+            const char current_piece = read_bit(bitboard, i) ? '1' : ' ';
 
-            cout << "| " << currentPiece << " ";
+            cout << "| " << current_piece << " ";
         }
         cout << "|" << endl;
     }
@@ -165,7 +165,7 @@ inline void printBitboard(const u64 bitboard) {
 }
 
 // Formats a number with commas
-inline string formatNum(const i64 v) {
+inline string format_num(const i64 v) {
     auto s = std::to_string(v);
 
     int n = s.length() - 3;
@@ -180,8 +180,8 @@ inline string formatNum(const i64 v) {
 }
 
 // Fancy formats a time
-inline string formatTime(const u64 timeInMS) {
-    long long seconds     = timeInMS / 1000;
+inline string format_time(const u64 time_ms) {
+    long long seconds     = time_ms / 1000;
     const long long hours = seconds / 3600;
     seconds %= 3600;
     const long long minutes = seconds / 60;
@@ -196,11 +196,11 @@ inline string formatTime(const u64 timeInMS) {
     if (seconds > 0 || minutes > 0 || hours > 0)
         result += std::to_string(seconds) + "s";
     if (result == "")
-        return std::to_string(timeInMS) + "ms";
+        return std::to_string(time_ms) + "ms";
     return result;
 }
 
-inline int findIndexOf(const auto arr, string entry) {
+inline int get_index(const auto arr, string entry) {
     auto it = std::find(arr.begin(), arr.end(), entry);
     if (it != arr.end()) {
         return std::distance(arr.begin(), it);  // Calculate the index
@@ -208,7 +208,7 @@ inline int findIndexOf(const auto arr, string entry) {
     return -1;  // Not found
 }
 
-inline string suffixNum(double num) {
+inline string suffix_num(double num) {
     char suffix = '\0';
     if (num >= 1'000'000'000 * 10.0) {
         num /= 1'000'000'000;
@@ -227,7 +227,7 @@ inline string suffixNum(double num) {
 }
 
 // Parses human-readable numbers
-inline u64 parseSuffixedNum(string text) {
+inline u64 parse_suffixed_num(string text) {
     assert(!text.empty());
 
     // Trim leading/trailing whitespace
@@ -278,7 +278,7 @@ inline u64 parseSuffixedNum(string text) {
 }
 
 // Heat color
-inline void heatColor(float t, const string& text) {
+inline void heat_color(float t, const string& text) {
     t = std::clamp(t, 0.0f, 1.0f);
     u8 r, g, b = 0;
     if (t < 0.5f) {
@@ -296,7 +296,7 @@ inline void heatColor(float t, const string& text) {
 }
 
 // Colored progress bar
-inline void coloredProgBar(const usize length, const float fill) {
+inline void colored_prog_bar(const usize length, const float fill) {
     if (length == 0) {
         fmt::print("[] 0%");
         return;
@@ -305,7 +305,7 @@ inline void coloredProgBar(const usize length, const float fill) {
     for (usize i = 0; i < length; ++i) {
         const float percentage = static_cast<float>(i) / (length - 1);
         if (percentage <= fill) {
-            heatColor(1 - percentage, "#");
+            heat_color(1 - percentage, "#");
         }
         else {
             fmt::print(".");
@@ -315,21 +315,21 @@ inline void coloredProgBar(const usize length, const float fill) {
 }
 
 // Score color
-inline string getColoredScore(const int cp) {
-    const double wdl      = 2 / (1 + std::pow(std::numbers::e, -(cp / 400.0f))) - 1;
-    const double colorWdl = std::clamp(wdl * 1.5f, -1.0, 1.0);
+inline string get_colored_score(const int cp) {
+    const double wdl       = 2 / (1 + std::pow(std::numbers::e, -(cp / 400.0f))) - 1;
+    const double color_wdl = std::clamp(wdl * 1.5f, -1.0, 1.0);
     u8 r, g, b;
 
     const auto lerp = [](const double a, const double b, const double t) { return a + t * (b - a); };
 
-    if (colorWdl < 0) {
-        const double t = colorWdl + 1.0;
+    if (color_wdl < 0) {
+        const double t = color_wdl + 1.0;
         r              = static_cast<u8>(lerp(255, 255, t));  // red stays max
         g              = static_cast<u8>(lerp(0, 255, t));    // green rises
         b              = static_cast<u8>(lerp(0, 255, t));    // blue rises
     }
     else {
-        const double t = colorWdl;                            // maps 0 -> 1
+        const double t = color_wdl;                           // maps 0 -> 1
         r              = static_cast<u8>(lerp(255, 0, t));    // red drops
         g              = static_cast<u8>(lerp(255, 255, t));  // green stays max
         b              = static_cast<u8>(lerp(255, 0, t));    // blue drops
@@ -338,27 +338,27 @@ inline string getColoredScore(const int cp) {
     return fmt::format(fmt::fg(fmt::rgb(r, g, b)), "{:+.2f}", cp / 100.0f);
 }
 
-inline string getPrettyPV(const PvList& pv, const usize numToShow = 12, const u8 colorDecay = 10, const u8 minColor = 96) {
+inline string get_pretty_pv(const PvList& pv, const usize num_to_show = 12, const u8 color_decay = 10, const u8 min_color = 96) {
     std::ostringstream oss;
     fmt::rgb color(255, 255, 255);
 
-    const usize endIdx = std::min<usize>(numToShow, pv.length);
+    const usize end_idx = std::min<usize>(num_to_show, pv.length);
 
-    for (usize idx = 0; idx < endIdx; idx++) {
-        oss << fmt::format(fg(color), "{}", pv.moves[idx].toString());
-        if (idx != endIdx - 1)
+    for (usize idx = 0; idx < end_idx; idx++) {
+        oss << fmt::format(fg(color), "{}", pv.moves[idx].str());
+        if (idx != end_idx - 1)
             oss << " ";
 
-        color.r -= colorDecay;
-        color.g -= colorDecay;
-        color.b -= colorDecay;
+        color.r -= color_decay;
+        color.g -= color_decay;
+        color.b -= color_decay;
 
-        color.r = std::max(color.r, minColor);
-        color.g = std::max(color.g, minColor);
-        color.b = std::max(color.b, minColor);
+        color.r = std::max(color.r, min_color);
+        color.g = std::max(color.g, min_color);
+        color.b = std::max(color.b, min_color);
     }
 
-    const usize remaining = pv.length - endIdx;
+    const usize remaining = pv.length - end_idx;
     if (remaining > 0)
         oss << fmt::format(fg(color), " ({} remaining)", remaining);
 

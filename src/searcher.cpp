@@ -9,58 +9,58 @@ void Searcher::start(const Board& board, const SearchParams sp) {
     stop();
 
     this->sp = sp;
-    searchLock.lock();
-    this->currentBoard = board;
-    this->depth        = 0;
-    this->seldepth     = 0;
-    this->score        = 0;
-    this->pv.length    = 0;
-    searchLock.unlock();
+    search_lock.lock();
+    this->current_board = board;
+    this->depth         = 0;
+    this->seldepth      = 0;
+    this->score         = 0;
+    this->pv.length     = 0;
+    search_lock.unlock();
 
-    stopFlag.store(false, std::memory_order_relaxed);
+    stop_flag.store(false, std::memory_order_relaxed);
 
-    for (usize i = threadData.size(); i > 0; i--)
-        threads.emplace_back(&Searcher::iterativeDeepening, this, std::ref(threadData[i - 1]), board, sp);
+    for (usize i = thread_data.size(); i > 0; i--)
+        threads.emplace_back(&Searcher::iterative_deepening, this, std::ref(thread_data[i - 1]), board, sp);
 }
 
 void Searcher::stop() {
-    stopFlag.store(true, std::memory_order_relaxed);
+    stop_flag.store(true, std::memory_order_relaxed);
 
-    waitUntilFinished();
+    wait_unit_done();
 
     threads.clear();
 }
 
-void Searcher::waitUntilFinished() {
+void Searcher::wait_unit_done() {
     for (auto& t : threads)
         if (t.joinable())
             t.join();
 }
 
-void Searcher::setThreads(const usize numThreads) {
-    threadData.clear();
-    threadData.emplace_back(ThreadType::MAIN, stopFlag);
+void Searcher::set_threads(const usize n_threads) {
+    thread_data.clear();
+    thread_data.emplace_back(ThreadType::MAIN, stop_flag);
 
-    for (usize i = 1; i < numThreads; i++)
-        threadData.emplace_back(ThreadType::SECONDARY, stopFlag);
+    for (usize i = 1; i < n_threads; i++)
+        thread_data.emplace_back(ThreadType::SECONDARY, stop_flag);
 }
 
-void Searcher::reportUci() {
-    searchLock.lock();
+void Searcher::report_uci() {
+    search_lock.lock();
 
     const u64 time  = std::max<u64>(sp.time.elapsed(), 1);
-    const u64 nodes = totalNodes();
+    const u64 nodes = total_nodes();
 
-    fmt::print("info depth {} seldepth {} time {} nodes {} nps {} hashfull {}", depth, threadData[0].seldepth, time, nodes, nodes * 1000 / time, transpositionTable.hashfull());
+    fmt::print("info depth {} seldepth {} time {} nodes {} nps {} hashfull {}", depth, thread_data[0].seldepth, time, nodes, nodes * 1000 / time, transposition_table.hashfull());
 
     fmt::print(" score ");
 
-    if (isDecisive(score))
+    if (is_decisive(score))
         fmt::print("mate {}", std::copysign((MATE_SCORE - std::abs(score)) / 2 + 1, score));
     else
-        fmt::print("cp {}", scaleEval(score, currentBoard));
+        fmt::print("cp {}", scale_eval(score, current_board));
 
-    const auto [w, d, l] = getWDL(currentBoard, score);
+    const auto [w, d, l] = get_wdl(current_board, score);
     fmt::print(" wdl {} {} {}", w, d, l);
 
     fmt::print(" pv");
@@ -68,38 +68,38 @@ void Searcher::reportUci() {
         cout << " " << m;
 
     cout << endl;
-    searchLock.unlock();
+    search_lock.unlock();
 }
 
-void Searcher::reportPrettyPrint() {
-    searchLock.lock();
+void Searcher::report_pretty() {
+    search_lock.lock();
 
     const u64 time  = std::max<u64>(sp.time.elapsed(), 1);
-    const u64 nodes = totalNodes();
+    const u64 nodes = total_nodes();
 
     cursor::cache();
     cursor::home();
-    cout << currentBoard.toString(pv.moves[0]);
+    cout << current_board.str(pv.moves[0]);
     cursor::load();
 
     // Depth
     fmt::print(fmt::fg(fmt::color::light_gray) | fmt::emphasis::bold, " {:<8} ", fmt::format("{}/{}", depth, seldepth));
 
     // Time
-    fmt::print(fmt::fg(fmt::color::gray), "{:>10}    ", formatTime(time));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>10}    ", format_time(time));
 
     // Nodes
-    fmt::print(fmt::fg(fmt::color::gray), "{:>20}    ", fmt::format("{} nodes", formatNum(nodes)));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>20}    ", fmt::format("{} nodes", format_num(nodes)));
 
     // Speed
-    fmt::print(fmt::fg(fmt::color::gray), "{:>12}    ", fmt::format("{} knps", formatNum(nodes / time)));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>12}    ", fmt::format("{} knps", format_num(nodes / time)));
 
     // TT
     fmt::print(fmt::fg(fmt::rgb(105, 200, 215)), "TT: ");
-    fmt::print(fmt::fg(fmt::color::gray), "{:>6}    ", fmt::format("{:.1f}%", transpositionTable.hashfull() / 10.0));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>6}    ", fmt::format("{:.1f}%", transposition_table.hashfull() / 10.0));
 
     // WDL
-    const auto [w, d, l] = getWDL(currentBoard, score);
+    const auto [w, d, l] = get_wdl(current_board, score);
     fmt::print(fmt::fg(fmt::rgb(105, 215, 105)), "W: ");
     fmt::print(fmt::fg(fmt::color::gray), "{:>6}    ", fmt::format("{:.1f}%", w / 10.0));
     fmt::print(fmt::fg(fmt::rgb(155, 155, 155)), "D: ");
@@ -108,11 +108,11 @@ void Searcher::reportPrettyPrint() {
     fmt::print(fmt::fg(fmt::color::gray), "{:>6}    ", fmt::format("{:.1f}%", l / 10.0));
 
     // Score
-    fmt::print(fmt::fg(fmt::color::gray), "{:>12}    ", getColoredScore(scaleEval(score, currentBoard)));
+    fmt::print(fmt::fg(fmt::color::gray), "{:>12}    ", get_colored_score(scale_eval(score, current_board)));
 
     // PV
-    fmt::print("{}", getPrettyPV(pv));
+    fmt::print("{}", get_pretty_pv(pv));
 
     cout << endl;
-    searchLock.unlock();
+    search_lock.unlock();
 }

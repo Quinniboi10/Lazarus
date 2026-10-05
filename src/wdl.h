@@ -11,7 +11,7 @@ struct WinRateParams {
 
 // The WDL code is from Stockfish
 
-inline WinRateParams winRateParams(const Board& board) {
+inline WinRateParams winrate_params(const Board& board) {
     const int material = board.count(PAWN) + 3 * board.count(KNIGHT) + 3 * board.count(BISHOP) + 5 * board.count(ROOK) + 9 * board.count(QUEEN);
 
     // The fitted model only uses data for material counts in [17, 78], and is anchored at count 58.
@@ -29,38 +29,38 @@ inline WinRateParams winRateParams(const Board& board) {
 
 // The win rate model is 1 / (1 + exp((a - eval) / b)), where a = p_a(material) and b = p_b(material).
 // It fits the LTC fishtest statistics rather accurately.
-inline int winRateModel(const Board& board, const int v) {
-    auto [a, b] = winRateParams(board);
+inline int win_rate_model(const Board& board, const int v) {
+    auto [a, b] = winrate_params(board);
 
     // Return the win rate in per mille units, rounded to the nearest integer.
     return 0.5 + 1000 / (1 + std::exp((a - static_cast<double>(v)) / b));
 }
 
-inline int scaleEval(const int eval, const Board& board) {
+inline int scale_eval(const int eval, const Board& board) {
     return eval;
     // This line disables eval scaling, it will be turned back on when the engine has better performance/converts positions better
-    auto [a, b] = winRateParams(board);
+    auto [a, b] = winrate_params(board);
 
     return std::round(100 * eval / a);
 }
 
-inline std::tuple<i16, i16, i16> getWDL(const Board& board, const i16 score) {
+inline std::tuple<i16, i16, i16> get_wdl(const Board& board, const i16 score) {
     i16 w;
     i16 d;
     i16 l;
-    if (isWin(score)) {
+    if (is_win(score)) {
         w = 1000;
         d = 0;
         l = 0;
     }
-    else if (isLoss(score)) {
+    else if (is_loss(score)) {
         w = 0;
         d = 0;
         l = 1000;
     }
     else {
-        w = winRateModel(board, score);
-        l = winRateModel(board, -score);
+        w = win_rate_model(board, score);
+        l = win_rate_model(board, -score);
         d = 1000 - w - l;
     }
 

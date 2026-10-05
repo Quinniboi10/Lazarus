@@ -9,61 +9,61 @@
 #include <thread>
 
 struct Searcher {
-    TranspositionTable transpositionTable;
+    TranspositionTable transposition_table;
 
-    std::atomic<bool> stopFlag{true};
-    std::vector<ThreadData> threadData;
+    std::atomic<bool> stop_flag{true};
+    std::vector<ThreadData> thread_data;
     std::vector<std::thread> threads;
 
     SearchParams sp;
 
     // Atomic probes to get information from the search
-    std::mutex searchLock{};
-    Board currentBoard{};
+    std::mutex search_lock{};
+    Board current_board{};
     usize depth{};
     usize seldepth{};
     i16 score{};
     PvList pv{};
 
-    bool doReporting;
+    bool do_reporting;
 
     // Dictates if uci/pretty printing should be used, false by default
-    bool doUci;
+    bool do_uci;
 
-    explicit Searcher(const bool doReporting, const bool doUci = false) {
-        setThreads(1);
-        this->doReporting = doReporting;
-        this->doUci       = doUci;
+    explicit Searcher(const bool do_reporting, const bool do_uci = false) {
+        set_threads(1);
+        this->do_reporting = do_reporting;
+        this->do_uci       = do_uci;
 
         reset();
     }
 
-    u64 totalNodes() const {
+    u64 total_nodes() const {
         u64 nodes = 0;
-        for (const ThreadData& t : threadData)
+        for (const ThreadData& t : thread_data)
             nodes += t.nodes.load(std::memory_order_relaxed);
         return nodes;
     }
 
     void start(const Board& board, SearchParams sp);
     void stop();
-    void waitUntilFinished();
+    void wait_unit_done();
 
-    void setThreads(usize numThreads);
+    void set_threads(usize n_threads);
 
-    void resizeTT(const u64 newSizeMiB) {
-        transpositionTable.reserve(newSizeMiB);
-        transpositionTable.clear();
+    void resize_tt(const u64 new_size_mib) {
+        transposition_table.reserve(new_size_mib);
+        transposition_table.clear();
     }
 
     void reset() {
-        transpositionTable.clear();
-        for (auto& t : threadData)
+        transposition_table.clear();
+        for (auto& t : thread_data)
             t.reset();
     }
 
-    MoveEvaluation iterativeDeepening(ThreadData& thisThread, Board board, SearchParams sp);
+    MoveEvaluation iterative_deepening(ThreadData& this_thread, Board board, SearchParams sp);
 
-    void reportUci();
-    void reportPrettyPrint();
+    void report_uci();
+    void report_pretty();
 };

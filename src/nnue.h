@@ -6,10 +6,10 @@
 #include "types.h"
 
 struct NNUE {
-    alignas(64) array<i16, HL_SIZE * 768> weightsToHL;
-    alignas(64) array<i16, HL_SIZE> hiddenLayerBias;
-    alignas(64) MultiArray<i16, OUTPUT_BUCKETS, HL_SIZE * 2> weightsToOut;
-    array<i16, OUTPUT_BUCKETS> outputBias;
+    alignas(64) array<i16, HL_SIZE * 768> weights_to_hl;
+    alignas(64) array<i16, HL_SIZE> hl_bias;
+    alignas(64) MultiArray<i16, OUTPUT_BUCKETS, HL_SIZE * 2> weights_to_out;
+    array<i16, OUTPUT_BUCKETS> output_bias;
 
     static i16 ReLU(i16 x);
     static i16 CReLU(i16 x);
@@ -19,10 +19,10 @@ struct NNUE {
 
     static usize feature(Color perspective, Color color, PieceType piece, Square square);
 
-    void loadNetwork(const string& filepath);
+    void load_net(const string& filepath);
 
-    int forwardPass(const Board* board, const AccumulatorPair& accumulators) const;
-    void showBuckets(const Board* board, const AccumulatorPair& accumulators) const;
+    int evaluate(const Board* board, const AccumulatorPair& accumulators) const;
+    void print_buckets(const Board* board, const AccumulatorPair& accumulators) const;
 
-    i16 evaluate(const Board& board, const ThreadData& thisThread) const;
+    i16 evaluate(const Board& board, const ThreadData& this_thread) const;
 };

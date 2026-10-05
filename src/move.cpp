@@ -2,15 +2,15 @@
 #include "board.h"
 #include "globals.h"
 
-Move::Move(const string& strIn, const Board& board) {
-    const Square from = parseSquare(strIn.substr(0, 2));
-    Square to         = parseSquare(strIn.substr(2, 2));
+Move::Move(const string& str_in, const Board& board) {
+    const Square from = parse_sq(str_in.substr(0, 2));
+    Square to         = parse_sq(str_in.substr(2, 2));
 
     MoveType flags = STANDARD_MOVE;
 
     // Move must be promotion
-    if (strIn.size() > 4) {
-        switch (strIn.at(4)) {
+    if (str_in.size() > 4) {
+        switch (str_in.at(4)) {
             case 'q':
                 *this = Move(from, to, QUEEN);
                 return;
@@ -27,53 +27,53 @@ Move::Move(const string& strIn, const Board& board) {
     }
 
     if (!chess960
-        && ((from == e1 && to == g1 && board.canCastle(WHITE, true)) || (from == e1 && to == c1 && board.canCastle(WHITE, false)) || (from == e8 && to == g8 && board.canCastle(BLACK, true))
-            || (from == e8 && to == c8 && board.canCastle(BLACK, false)))) {
+        && ((from == e1 && to == g1 && board.can_castle(WHITE, true)) || (from == e1 && to == c1 && board.can_castle(WHITE, false)) || (from == e8 && to == g8 && board.can_castle(BLACK, true))
+            || (from == e8 && to == c8 && board.can_castle(BLACK, false)))) {
         const bool kingside = to > from;
 
-        to = board.castleSq(board.stm, kingside);
+        to = board.castle_sq(board.stm, kingside);
 
         flags = CASTLE;
     }
-    else if (chess960 && board.getPiece(from) == KING && ((1ULL << to) & board.pieces(board.stm, ROOK))) {
+    else if (chess960 && board.get_piece(from) == KING && ((1ULL << to) & board.pieces(board.stm, ROOK))) {
         const bool kingside = to > from;
-        if (board.canCastle(board.stm, kingside))
+        if (board.can_castle(board.stm, kingside))
             flags = CASTLE;
     }
-    else if (to == board.epSquare && ((1ULL << from) & board.pieces(board.stm, PAWN)))
+    else if (to == board.ep_sq && ((1ULL << from) & board.pieces(board.stm, PAWN)))
         flags = EN_PASSANT;
 
     *this = Move(from, to, flags);
 }
 
-string Move::toString() const {
-    const MoveType mt = typeOf();
+string Move::str() const {
+    const MoveType mt = type();
 
-    string moveStr = squareToAlgebraic(from());
+    string move_str = sq_to_algebraic(from());
     if (mt == CASTLE && !chess960)
-        return moveStr + (squareToAlgebraic(to() + (from() < to() ? WEST : EAST * 2)));
+        return move_str + (sq_to_algebraic(to() + (from() < to() ? WEST : EAST * 2)));
 
-    moveStr += squareToAlgebraic(to());
+    move_str += sq_to_algebraic(to());
 
     if (mt != PROMOTION)
-        return moveStr;
+        return move_str;
 
     switch (promo()) {
         case KNIGHT:
-            moveStr += 'n';
+            move_str += 'n';
             break;
         case BISHOP:
-            moveStr += 'b';
+            move_str += 'b';
             break;
         case ROOK:
-            moveStr += 'r';
+            move_str += 'r';
             break;
         case QUEEN:
-            moveStr += 'q';
+            move_str += 'q';
             break;
         default:
             break;
     }
 
-    return moveStr;
+    return move_str;
 }

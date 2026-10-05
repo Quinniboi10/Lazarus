@@ -22,8 +22,8 @@ struct HistoryEntry {
     }
 
     void update(const i32 bonus) {
-        const i32 clampedBonus = std::clamp<i32>(bonus, -MAX_VALUE, MAX_VALUE);
-        value += clampedBonus - value * abs(clampedBonus) / MAX_VALUE;
+        const i32 clamped_bonus = std::clamp<i32>(bonus, -MAX_VALUE, MAX_VALUE);
+        value += clamped_bonus - value * abs(clamped_bonus) / MAX_VALUE;
     }
 };
 
@@ -36,54 +36,54 @@ struct ThreadData {
     MultiArray<HistoryEntry<MAX_HISTORY>, 2, 6, 7, 64> capthist;
 
     // Pawn correction history indexed [stm][pawn key % size]
-    MultiArray<HistoryEntry<MAX_CORRHIST>, 2, CORRHIST_SIZE> pawnCorrhist;
+    MultiArray<HistoryEntry<MAX_CORRHIST>, 2, CORRHIST_SIZE> pawn_corrhist;
 
     // Major correction history indexed [stm][major key % size]
-    MultiArray<HistoryEntry<MAX_CORRHIST>, 2, CORRHIST_SIZE> majorCorrhist;
+    MultiArray<HistoryEntry<MAX_CORRHIST>, 2, CORRHIST_SIZE> major_corrhist;
 
     // All the accumulators for each thread's search
-    Stack<AccumulatorPair, MAX_PLY + 1> accumulatorStack;
+    Stack<AccumulatorPair, MAX_PLY + 1> accum_stack;
 
     ThreadType type;
 
-    std::atomic<bool>& breakFlag;
+    std::atomic<bool>& break_flag;
 
     std::atomic<u64> nodes;
     usize seldepth;
 
-    ThreadData(ThreadType type, std::atomic<bool>& breakFlag);
+    ThreadData(ThreadType type, std::atomic<bool>& break_flag);
 
     // Copy constructor
     ThreadData(const ThreadData& other);
 
     // Accessors for the histories
-    auto& getHistory(const Board& b, const Move m) {
+    auto& get_history(const Board& b, const Move m) {
         return history[b.stm][m.from()][m.to()];
     }
-    auto& getHistory(const Board& b, const Move m) const {
+    auto& get_history(const Board& b, const Move m) const {
         return history[b.stm][m.from()][m.to()];
     }
-    auto& getCaptureHistory(const Board& b, const Move m) {
-        return capthist[b.stm][b.getPiece(m.from())][b.getPiece(m.to())][m.to()];
+    auto& get_capture_history(const Board& b, const Move m) {
+        return capthist[b.stm][b.get_piece(m.from())][b.get_piece(m.to())][m.to()];
     }
-    auto& getCaptureHistory(const Board& b, const Move m) const {
-        return capthist[b.stm][b.getPiece(m.from())][b.getPiece(m.to())][m.to()];
+    auto& get_capture_history(const Board& b, const Move m) const {
+        return capthist[b.stm][b.get_piece(m.from())][b.get_piece(m.to())][m.to()];
     }
-    void updateCorrhist(const Board& b, const i16 depth, const i16 score, const i16 eval) {
+    void update_corrhist(const Board& b, const i16 depth, const i16 score, const i16 eval) {
         const i32 bonus = std::clamp<i32>((score - eval) * depth / 8, -MAX_CORRHIST / 4, MAX_CORRHIST / 4);
-        pawnCorrhist[b.stm][b.pawnHash % CORRHIST_SIZE].update(bonus);
-        majorCorrhist[b.stm][b.majorHash % CORRHIST_SIZE].update(bonus);
+        pawn_corrhist[b.stm][b.pawn_hash % CORRHIST_SIZE].update(bonus);
+        major_corrhist[b.stm][b.major_hash % CORRHIST_SIZE].update(bonus);
     }
-    i16 correctStaticEval(const Board& b, const i16 staticEval) const {
+    i16 correct_static_eval(const Board& b, const i16 static_eval) const {
         i32 correction = 0;
-        correction += pawnCorrhist[b.stm][b.pawnHash % CORRHIST_SIZE] * PAWN_CORRHIST_WEIGHT;
-        correction += majorCorrhist[b.stm][b.majorHash % CORRHIST_SIZE] * MAJOR_CORRHIST_WEIGHT;
+        correction += pawn_corrhist[b.stm][b.pawn_hash % CORRHIST_SIZE] * PAWN_CORRHIST_WEIGHT;
+        correction += major_corrhist[b.stm][b.major_hash % CORRHIST_SIZE] * MAJOR_CORRHIST_WEIGHT;
 
-        return std::clamp<i16>(staticEval + correction / 512, MATED_IN_MAX_PLY, MATE_IN_MAX_PLY);
+        return std::clamp<i16>(static_eval + correction / 512, MATED_IN_MAX_PLY, MATE_IN_MAX_PLY);
     }
 
-    std::pair<Board, ThreadStackManager> makeMove(const Board& board, Move m);
-    std::pair<Board, ThreadStackManager> makeNullMove(const Board& board);
+    std::pair<Board, ThreadStackManager> make_move(const Board& board, Move m);
+    std::pair<Board, ThreadStackManager> make_null_move(const Board& board);
 
     // Reset the accumulator stack for a given position
     void refresh(const Board& b);
@@ -92,15 +92,15 @@ struct ThreadData {
 };
 
 struct ThreadStackManager {
-    ThreadData& thisThread;
+    ThreadData& this_thread;
 
-    explicit ThreadStackManager(ThreadData& thisThread) :
-        thisThread(thisThread) {
+    explicit ThreadStackManager(ThreadData& this_thread) :
+        this_thread(this_thread) {
     }
 
     ThreadStackManager(const ThreadStackManager& other) = delete;
 
     ~ThreadStackManager() {
-        thisThread.accumulatorStack.pop();
+        this_thread.accum_stack.pop();
     }
 };

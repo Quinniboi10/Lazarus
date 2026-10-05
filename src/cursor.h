@@ -3,13 +3,13 @@
 #include <iostream>
 
 namespace cursor {
-    static void clearAll(std::ostream& out = std::cout) {
+    static void clear_all(std::ostream& out = std::cout) {
         out << "\033[2J\033[H";
     }
     static void clear(std::ostream& out = std::cout) {
         out << "\033[2K\r";
     }
-    static void clearDown(std::ostream& out = std::cout) {
+    static void clear_down(std::ostream& out = std::cout) {
         out << "\x1b[J";
     }
     static void home(std::ostream& out = std::cout) {
@@ -24,7 +24,7 @@ namespace cursor {
     static void begin(std::ostream& out = std::cout) {
         out << "\033[1G";
     }
-    static void goTo(const unsigned x, const unsigned y, std::ostream& out = std::cout) {
+    static void go_to(const unsigned x, const unsigned y, std::ostream& out = std::cout) {
         out << "\033[" << y << ";" << x << "H";
     }
 

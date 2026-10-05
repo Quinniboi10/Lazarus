@@ -11,48 +11,48 @@ struct Board {
     // Index is based on square, returns the piece type
     array<PieceType, 64> mailbox;
     // Indexed pawns, knights, bishops, rooks, queens, king
-    array<u64, 6> byPieces;
+    array<u64, 6> by_pieces;
     // Index is based on color
-    array<u64, 2> byColor;
+    array<u64, 2> by_color;
     // Board hash
-    u64 fullHash;   // The entire board, for TT, threefold, etc
-    u64 pawnHash;   // Just the pawns
-    u64 majorHash;  // King + queen + rook
+    u64 full_hash;   // The entire board, for TT, threefold, etc
+    u64 pawn_hash;   // Just the pawns
+    u64 major_hash;  // King + queen + rook
 
     // History of positions
-    std::vector<u64> posHistory;
+    std::vector<u64> pos_history;
 
-    bool doubleCheck;
-    u64 checkMask;
+    bool double_check;
+    u64 check_mask;
     u64 pinned;
-    array<u64, 2> pinnersPerC;
+    array<u64, 2> pinners_by_color;
 
 
-    Square epSquare;
+    Square ep_sq;
     // Index KQkq
     array<Square, 4> castling;
 
     Color stm;
 
-    usize halfMoveClock;
-    usize fullMoveClock;
+    usize halfmove_ctr;
+    usize fullmove_ctr;
 
    private:
-    bool fromNull;
+    bool from_null;
 
-    char getPieceAsChar(Square sq) const;
+    char get_piece_char(Square sq) const;
 
-    void placePiece(Color c, PieceType pt, Square sq);
-    void removePiece(Color c, PieceType pt, Square sq);
-    void removePiece(Color c, Square sq);
-    void resetMailbox();
-    void resetHashes();
-    void updateCheckPin();
+    void place_piece(Color c, PieceType pt, Square sq);
+    void remove_piece(Color c, PieceType pt, Square sq);
+    void remove_piece(Color c, Square sq);
+    void reset_mailbox();
+    void reset_hashes();
+    void update_check_pin();
 
-    void setCastlingRights(Color c, Square sq, bool value);
-    void unsetCastlingRights(Color c);
+    void set_castling_rights(Color c, Square sq, bool value);
+    void unset_castling_rights(Color c);
 
-    u64 hashCastling() const;
+    u64 hash_castling() const;
 
     template<bool minimal>
     void move(Move m);
@@ -60,8 +60,8 @@ struct Board {
    public:
     Board() = default;
 
-    constexpr Square castleSq(const Color c, const bool kingside) const {
-        return castling[castleIndex(c, kingside)];
+    constexpr Square castle_sq(const Color c, const bool kingside) const {
+        return castling[castle_idx(c, kingside)];
     }
 
     u8 count(PieceType pt) const;
@@ -73,39 +73,39 @@ struct Board {
     u64 pieces(PieceType pt1, PieceType pt2) const;
     u64 pieces(Color c, PieceType pt1, PieceType pt2) const;
 
-    u64 attackersTo(Square sq, u64 occ) const;
+    u64 attackers_to(Square sq, u64 occ) const;
 
-    u64 roughKeyAfter(Move m) const;
+    u64 approx_key_after(Move m) const;
 
     void reset();
 
-    void loadFromFEN(const string& fen);
+    void load_fen(const string& fen);
     string fen() const;
 
-    PieceType getPiece(Square sq) const;
-    bool isCapture(Move m) const;
-    bool isQuiet(Move m) const;
+    PieceType get_piece(Square sq) const;
+    bool is_capture(Move m) const;
+    bool is_quiet(Move m) const;
 
     void move(Move m);
     void move(const string& str);
 
-    bool canNullMove() const;
-    void nullMove();
+    bool can_null_move() const;
+    void make_null_move();
 
-    bool canCastle(Color c) const;
-    bool canCastle(Color c, bool kingside) const;
+    bool can_castle(Color c) const;
+    bool can_castle(Color c, bool kingside) const;
 
-    bool isLegal(Move m);
+    bool is_legal(Move m);
 
-    bool inCheck() const;
-    bool isUnderAttack(Color c, Square square) const;
+    bool in_check() const;
+    bool is_under_attack(Color c, Square square) const;
 
-    bool isDraw();
-    bool isGameOver();
+    bool is_draw();
+    bool is_game_over();
 
     bool see(Move m, int threshold) const;
 
-    string toString(Move m = Move::null()) const;
+    string str(Move m = Move::null()) const;
 
     friend u64 perft(Board& board, usize depth);
 };

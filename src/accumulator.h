@@ -10,13 +10,13 @@ struct AccumulatorPair {
     alignas(64) Accumulator white_;
     alignas(64) Accumulator black_;
 
-    void resetAccumulators(const Board& board);
+    void recompute_all(const Board& board);
 
-    void update(const Board& board, Move m, PieceType toPT);
+    void update(const Board& board, Move m, PieceType to_pt);
 
-    void addSub(Color stm, Square add, PieceType addPT, Square sub, PieceType subPT);
-    void addSubSub(Color stm, Square add, PieceType addPT, Square sub1, PieceType subPT1, Square sub2, PieceType subPT2);
-    void addAddSubSub(Color stm, Square add1, PieceType addPT1, Square add2, PieceType addPT2, Square sub1, PieceType subPT1, Square sub2, PieceType subPT2);
+    void add_sub(Color stm, Square add, PieceType add_pt, Square sub, PieceType sub_pt);
+    void add_sub_sub(Color stm, Square add, PieceType add_pt, Square sub1, PieceType sub_pt1, Square sub2, PieceType sub_pt2);
+    void add_add_sub_sub(Color stm, Square add1, PieceType add_pt1, Square add2, PieceType add_pt2, Square sub1, PieceType sub_pt1, Square sub2, PieceType sub_pt2);
 
     bool operator==(const AccumulatorPair& other) const = default;
 };

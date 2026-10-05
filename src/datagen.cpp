@@ -8,54 +8,54 @@
 #include "searcher.h"
 
 namespace datagen {
-    void genFens(const string& params) {
+    void gen_fens(const string& params) {
         if (params.empty())
             return;
 
         std::vector<string> tokens = split(params, ' ');
 
-        const auto getValueFollowing = [&](const string& value, const auto& defaultValue) {
+        const auto get_value_following = [&](const string& value, const auto& default_value) {
             const auto loc  = std::find(tokens.begin(), tokens.end(), value);
             const usize idx = std::distance(tokens.begin(), loc) + 1;
             if (loc == tokens.end() || idx >= tokens.size()) {
                 std::ostringstream ss;
-                ss << defaultValue;
+                ss << default_value;
                 return ss.str();
             }
             return tokens[idx];
         };
 
-        const auto isValidPosition = [](const Board& board) {
+        const auto is_valid_pos = [](const Board& board) {
             Searcher searcher(false);
             Stopwatch<std::chrono::milliseconds> time;
             searcher.start(board, SearchParams(time, BENCH_DEPTH, 0, 0, 0, 0, 0, 0, 0, 0));
-            searcher.waitUntilFinished();
+            searcher.wait_unit_done();
 
             return std::abs(searcher.score) <= MAX_STARTPOS_SCORE;
         };
 
-        const u64 numFens = std::stoull(getValueFollowing("genfens", 1));
-        const u64 seed    = std::stoull(getValueFollowing("seed", std::time(nullptr)));
+        const u64 num_fens = std::stoull(get_value_following("genfens", 1));
+        const u64 seed     = std::stoull(get_value_following("seed", std::time(nullptr)));
 
         std::mt19937 eng(seed);
         std::uniform_int_distribution<int> dist(0, 1);
-        const auto randBool = [&]() { return dist(eng); };
+        const auto rand_bool = [&]() { return dist(eng); };
 
         u64 fens = 0;
-        while (fens < numFens) {
-startLoop:
+        while (fens < num_fens) {
+start_loop:
             Board board;
             board.reset();
-            const usize randomMoves = datagen::RAND_MOVES + randBool();
-            for (usize i = 0; i < randomMoves; i++) {
-                MoveList moves = Movegen::generateLegalMoves(board);
+            const usize n_random_moves = datagen::RAND_MOVES + rand_bool();
+            for (usize i = 0; i < n_random_moves; i++) {
+                MoveList moves = movegen::gen_legal_moves(board);
                 std::uniform_int_distribution<int> dist(0, moves.length - 1);
                 board.move(moves.moves[dist(eng)]);
-                if (board.isGameOver())
-                    goto startLoop;
+                if (board.is_game_over())
+                    goto start_loop;
             }
 
-            if (!isValidPosition(board))
+            if (!is_valid_pos(board))
                 continue;
 
             cout << "info string genfens " << board.fen() << endl;

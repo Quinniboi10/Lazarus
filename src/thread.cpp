@@ -1,54 +1,54 @@
 #include "thread.h"
 #include <tuple>
 
-ThreadData::ThreadData(const ThreadType type, std::atomic<bool>& breakFlag) :
+ThreadData::ThreadData(const ThreadType type, std::atomic<bool>& break_flag) :
     type(type),
-    breakFlag(breakFlag) {
-    breakFlag.store(false, std::memory_order_relaxed);
+    break_flag(break_flag) {
+    break_flag.store(false, std::memory_order_relaxed);
 
-    deepFill(history, 0);
+    deepfill(history, 0);
     nodes    = 0;
     seldepth = 0;
 }
 ThreadData::ThreadData(const ThreadData& other) :
     history(other.history),
-    accumulatorStack(other.accumulatorStack),
+    accum_stack(other.accum_stack),
     type(other.type),
-    breakFlag(other.breakFlag),
+    break_flag(other.break_flag),
     seldepth(other.seldepth) {
     nodes.store(other.nodes.load(std::memory_order_relaxed), std::memory_order_relaxed);
 }
 
-std::pair<Board, ThreadStackManager> ThreadData::makeMove(const Board& board, const Move m) {
-    Board newBoard = board;
-    newBoard.move(m);
+std::pair<Board, ThreadStackManager> ThreadData::make_move(const Board& board, const Move m) {
+    Board new_board = board;
+    new_board.move(m);
 
-    accumulatorStack.push(accumulatorStack.top());
-    accumulatorStack.topAsReference().update(newBoard, m, board.getPiece(m.to()));
+    accum_stack.push(accum_stack.top());
+    accum_stack.top_as_ref().update(new_board, m, board.get_piece(m.to()));
 
-    return {std::piecewise_construct, std::forward_as_tuple(std::move(newBoard)), std::forward_as_tuple(*this)};
+    return {std::piecewise_construct, std::forward_as_tuple(std::move(new_board)), std::forward_as_tuple(*this)};
 }
 
-std::pair<Board, ThreadStackManager> ThreadData::makeNullMove(const Board& board) {
-    Board newBoard = board;
-    newBoard.nullMove();
+std::pair<Board, ThreadStackManager> ThreadData::make_null_move(const Board& board) {
+    Board new_board = board;
+    new_board.make_null_move();
 
-    accumulatorStack.push(accumulatorStack.top());
+    accum_stack.push(accum_stack.top());
 
-    return {std::piecewise_construct, std::forward_as_tuple(std::move(newBoard)), std::forward_as_tuple(*this)};
+    return {std::piecewise_construct, std::forward_as_tuple(std::move(new_board)), std::forward_as_tuple(*this)};
 }
 
 void ThreadData::refresh(const Board& b) {
-    accumulatorStack.clear();
+    accum_stack.clear();
 
     AccumulatorPair accumulators{};
-    accumulators.resetAccumulators(b);
-    accumulatorStack.push(accumulators);
+    accumulators.recompute_all(b);
+    accum_stack.push(accumulators);
 }
 
 void ThreadData::reset() {
-    deepFill(history, 0);
-    deepFill(capthist, 0);
-    deepFill(pawnCorrhist, 0);
-    deepFill(majorCorrhist, 0);
+    deepfill(history, 0);
+    deepfill(capthist, 0);
+    deepfill(pawn_corrhist, 0);
+    deepfill(major_corrhist, 0);
 }

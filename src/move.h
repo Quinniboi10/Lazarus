@@ -20,26 +20,26 @@ class Move {
     constexpr Move(const Move& other) = default;
     constexpr ~Move()                 = default;
 
-    constexpr Move(const u8 startSquare, const u8 endSquare, const MoveType flags = STANDARD_MOVE) {
-        move = startSquare | flags;
-        move |= endSquare << 6;
+    constexpr Move(const u8 start_sq, const u8 end_sq, const MoveType flags = STANDARD_MOVE) {
+        move = start_sq | flags;
+        move |= end_sq << 6;
         move |= flags << 12;
     }
 
-    constexpr Move(const u8 startSquare, const u8 endSquare, const PieceType promo) {
-        move = startSquare | PROMOTION;
-        move |= endSquare << 6;
+    constexpr Move(const u8 start_sq, const u8 end_sq, const PieceType promo) {
+        move = start_sq | PROMOTION;
+        move |= end_sq << 6;
         move |= (promo - 1) << 12;
     }
 
-    Move(const string& strIn, const Board& board);
+    Move(const string& str_in, const Board& board);
 
     constexpr static Move null() {
         return {a1, a1, STANDARD_MOVE};
     }
 
 
-    string toString() const;
+    string str() const;
 
     Square from() const {
         return static_cast<Square>(move & 0b111111);
@@ -48,16 +48,16 @@ class Move {
         return static_cast<Square>((move >> 6) & 0b111111);
     }
 
-    MoveType typeOf() const {
+    MoveType type() const {
         return static_cast<MoveType>(move & 0xC000);
     }
 
     PieceType promo() const {
-        assert(typeOf() == PROMOTION);
+        assert(type() == PROMOTION);
         return static_cast<PieceType>(((move >> 12) & 0b11) + 1);
     }
 
-    bool isNull() const {
+    bool is_null() const {
         return *this == null();
     }
 
@@ -66,7 +66,7 @@ class Move {
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Move& m) {
-        os << m.toString();
+        os << m.str();
         return os;
     }
 };
