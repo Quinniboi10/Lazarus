@@ -48,7 +48,7 @@ class TranspositionTable {
 
 
     void clear(const usize thread_count = 1) {
-        assert(thread_count > 0);
+        traced_assert(thread_count > 0);
 
         std::vector<std::thread> threads;
 
@@ -74,7 +74,7 @@ class TranspositionTable {
     }
 
     void reserve(const usize new_size_mib) {
-        assert(new_size_mib > 0);
+        traced_assert(new_size_mib > 0);
         // Find number of bytes allowed
         size = new_size_mib * 1024 * 1024 / sizeof(Transposition);
         if (table != nullptr)
@@ -105,7 +105,7 @@ class TranspositionTable {
         for (usize sample = 0; sample < samples; sample++)
             hits += table[sample].key != 0;
         const usize hash = hits * 1000.0 / samples;
-        assert(hash <= 1000);
+        traced_assert(hash <= 1000);
         return hash;
     }
 };

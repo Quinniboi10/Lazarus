@@ -56,7 +56,7 @@ struct Movepicker {
         return seen < moves.length;
     }
     Move get_next() {
-        assert(has_next());
+        traced_assert(has_next());
         return moves.moves[find_next()];
     }
 };

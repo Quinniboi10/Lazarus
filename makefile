@@ -21,7 +21,7 @@ endif
 
 #Compiler and flags
 CXX      := clang++
-CXXFLAGS := -O3 -fno-finite-math-only -flto -std=c++20 -DNDEBUG
+CXXFLAGS := -O3 -fno-finite-math-only -flto -std=c++23 -DNDEBUG
 
 # Handle ARM vs x86 builds
 ifeq ($(OS),Windows_NT)
@@ -92,12 +92,12 @@ release: all
 
 # Debug build
 .PHONY: debug
-debug: CXXFLAGS = -std=c++20 -O2 -ggdb -fno-finite-math-only -fno-inline-functions -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer -rdynamic -DBOOST_STACKTRACE_USE_ADDR2LINE -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -Wall -Wextra
+debug: CXXFLAGS = -std=c++23 -O2 -ggdb -fno-finite-math-only -fno-inline-functions -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer -rdynamic -DBOOST_STACKTRACE_USE_ADDR2LINE -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -lstdc++exp -Wall -Wextra
 debug: all
 
 # Debug build
 .PHONY: profile
-profile: CXXFLAGS = -std=c++20 -O3 -g -fno-finite-math-only -flto -fno-omit-frame-pointer -DNDEBUG
+profile: CXXFLAGS = -std=c++23 -O3 -g -fno-finite-math-only -flto -fno-omit-frame-pointer -DNDEBUG
 profile: all
 
 # Force rebuild

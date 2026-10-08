@@ -1,4 +1,6 @@
 #include "board.h"
+
+#include "assert.h"
 #include "constants.h"
 #include "globals.h"
 #include "movegen.h"
@@ -8,7 +10,6 @@
 
 #include "../external/fmt/fmt/color.h"
 
-#include <cassert>
 #include <random>
 
 const auto [PIECE_ZTABLE, EP_ZTABLE, STM_ZHASH, CASTLING_ZTABLE] = []() {
@@ -53,12 +54,12 @@ char Board::get_piece_char(const Square sq) const {
 }
 
 void Board::place_piece(const Color c, const PieceType pt, const Square sq) {
-    assert(sq >= 0);
-    assert(sq < 64);
+    traced_assert(sq >= 0);
+    traced_assert(sq < 64);
 
     auto& bb = by_pieces[pt];
 
-    assert(!read_bit(bb, sq));
+    traced_assert(!read_bit(bb, sq));
 
     full_hash ^= PIECE_ZTABLE[c][pt][sq];
     if (pt == PAWN)
@@ -73,12 +74,12 @@ void Board::place_piece(const Color c, const PieceType pt, const Square sq) {
 }
 
 void Board::remove_piece(const Color c, const PieceType pt, const Square sq) {
-    assert(sq >= 0);
-    assert(sq < 64);
+    traced_assert(sq >= 0);
+    traced_assert(sq < 64);
 
     auto& bb = by_pieces[pt];
 
-    assert(read_bit(bb, sq));
+    traced_assert(read_bit(bb, sq));
 
     full_hash ^= PIECE_ZTABLE[c][pt][sq];
     if (pt == PAWN)
@@ -93,14 +94,14 @@ void Board::remove_piece(const Color c, const PieceType pt, const Square sq) {
 }
 
 void Board::remove_piece(const Color c, const Square sq) {
-    assert(sq >= 0);
-    assert(sq < 64);
+    traced_assert(sq >= 0);
+    traced_assert(sq < 64);
 
     const PieceType pt = get_piece(sq);
 
     auto& bb = by_pieces[pt];
 
-    assert(read_bit(bb, sq));
+    traced_assert(read_bit(bb, sq));
 
     full_hash ^= PIECE_ZTABLE[c][pt][sq];
     if (pt == PAWN)
@@ -553,7 +554,7 @@ void Board::move(const Move m) {
             place_piece(stm, pt, to);
             break;
         case CASTLE:
-            assert(get_piece(to) == ROOK);
+            traced_assert(get_piece(to) == ROOK);
             remove_piece(stm, ROOK, to);
             {
                 const Rank r = rank_of(from);
@@ -572,8 +573,8 @@ void Board::move(const Move m) {
             break;
     }
 
-    assert(popcount(pieces(WHITE, KING)) == 1);
-    assert(popcount(pieces(BLACK, KING)) == 1);
+    traced_assert(popcount(pieces(WHITE, KING)) == 1);
+    traced_assert(popcount(pieces(BLACK, KING)) == 1);
 
     if (pt == ROOK) {
         const Square sq = castle_sq(stm, from > get_lsb(pieces(stm, KING)));
@@ -637,7 +638,7 @@ bool Board::can_castle(const Color c, const bool kingside) const {
 }
 
 bool Board::is_legal(const Move m) {
-    assert(!m.is_null());
+    traced_assert(!m.is_null());
 
     // Castling checks
     if (m.type() == CASTLE) {
@@ -705,8 +706,8 @@ bool Board::in_check() const {
 }
 
 bool Board::is_under_attack(const Color c, const Square square) const {
-    assert(square >= a1);
-    assert(square < NO_SQUARE);
+    traced_assert(square >= a1);
+    traced_assert(square < NO_SQUARE);
     // *** SLIDING PIECE ATTACKS ***
     // Straight Directions (Rooks and Queens)
     if (pieces(~c, ROOK, QUEEN) & movegen::get_rook_attacks(square, pieces()))

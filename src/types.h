@@ -1,8 +1,9 @@
 #pragma once
 
+#include "assert.h"
+
 #include <array>
 #include <bit>
-#include <cassert>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -152,13 +153,13 @@ public:
     }
 
     u8 operator[](const usize index) const {
-        assert(index < size);
+        traced_assert(index < size);
         if (index % 2 == 0) return data[index / 2] & 0b1111;
         return data[index / 2] >> 4;
     }
 
     void set(const usize index, const u8 value) {
-        assert(value == (value & 0b1111));
+        traced_assert(value == (value & 0b1111));
         if (index % 2 == 0) {
             data[index / 2] &= 0b11110000;
             data[index / 2] |= value;
@@ -181,19 +182,19 @@ class Stack {
       }
 
       void push(const Type& t) {
-          assert(ptr < size);
+          traced_assert(ptr < size);
           underlying[ptr++] = t;
       }
       Type pop() {
-          assert(ptr > 0);
+          traced_assert(ptr > 0);
           return underlying[--ptr];
       }
       const Type& top() const {
-          assert(ptr > 0);
+          traced_assert(ptr > 0);
           return underlying[ptr - 1];
       }
       Type& top_as_ref() {
-          assert(ptr > 0);
+          traced_assert(ptr > 0);
           return underlying[ptr - 1];
       }
       void clear() {

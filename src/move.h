@@ -1,8 +1,8 @@
 #pragma once
 
 #include <algorithm>
-#include <cassert>
 
+#include "assert.h"
 #include "config.h"
 
 struct Board;
@@ -53,7 +53,7 @@ class Move {
     }
 
     PieceType promo() const {
-        assert(type() == PROMOTION);
+        traced_assert(type() == PROMOTION);
         return static_cast<PieceType>(((move >> 12) & 0b11) + 1);
     }
 
@@ -98,7 +98,7 @@ struct PvList {
 
         length = child.length + 1;
 
-        assert(length == 1 || moves[0] != moves[1]);
+        traced_assert(length == 1 || moves[0] != moves[1]);
     }
 
     auto begin() {
@@ -129,7 +129,7 @@ struct MoveList {
     MoveList() = default;
 
     void add(const Move m) {
-        assert(length < 256);
+        traced_assert(length < 256);
         moves[length++] = m;
     }
 
@@ -157,7 +157,7 @@ struct MoveList {
         return std::find(begin(), end(), m) != end();
     }
     void remove(const Move m) {
-        assert(has(m));
+        traced_assert(has(m));
         const auto location = std::find(begin(), end(), m);
         if (location != end()) {
             *(location) = moves[length - 1];

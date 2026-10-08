@@ -1,4 +1,5 @@
 #include "thread.h"
+
 #include <tuple>
 
 ThreadData::ThreadData(const ThreadType type, std::atomic<bool>& break_flag) :

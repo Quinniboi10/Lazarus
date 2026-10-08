@@ -25,11 +25,11 @@ void movegen::pawn_moves(const Board& board, MoveList& moves) {
     }
 
     auto add_promos = [&](const Square from, const Square to) {
-        assert(from >= 0);
-        assert(from < 64);
+        traced_assert(from >= 0);
+        traced_assert(from < 64);
 
-        assert(to >= 0);
-        assert(to < 64);
+        traced_assert(to >= 0);
+        traced_assert(to < 64);
 
         moves.add(Move(from, to, QUEEN));
         if constexpr (mode != NOISY_ONLY) {
@@ -176,8 +176,8 @@ template<MovegenMode mode>
 void movegen::king_moves(const Board& board, MoveList& moves) {
     const Square king_sq = get_lsb(board.pieces(board.stm, KING));
 
-    assert(king_sq >= a1);
-    assert(king_sq < NO_SQUARE);
+    traced_assert(king_sq >= a1);
+    traced_assert(king_sq < NO_SQUARE);
 
     u64 king_moves = KING_ATTACKS[king_sq];
     king_moves &= ~board.pieces(board.stm);

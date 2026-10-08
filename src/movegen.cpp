@@ -1,7 +1,7 @@
 #include "movegen.h"
+
 #include "types.h"
 
-#include <cassert>
 #include <fstream>
 #include <thread>
 
@@ -236,8 +236,8 @@ void movegen::init_databases() {
 }
 
 u64 movegen::pawn_attack_bb(const Color c, const Square sq) {
-    assert(sq >= a1);
-    assert(sq < NO_SQUARE);
+    traced_assert(sq >= a1);
+    traced_assert(sq < NO_SQUARE);
 
     const u64 sq_bb = 1ULL << sq;
     if (c == WHITE) {

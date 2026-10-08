@@ -1,5 +1,7 @@
 #include "nnue.h"
+
 #include "accumulator.h"
+#include "assert.h"
 #include "board.h"
 #include "config.h"
 #include "search.h"
@@ -218,7 +220,7 @@ i16 NNUE::evaluate(const Board& board, const ThreadData& this_thread) const {
     verif_accum.recompute_all(board);
     if (verif_accum != this_thread.accum_stack.top())
         cout << board.str() << endl;
-    assert(verif_accum == this_thread.accum_stack.top());
+    traced_assert(verif_accum == this_thread.accum_stack.top());
 #endif
     return std::clamp<i32>(evaluate(&board, this_thread.accum_stack.top()), MATED_IN_MAX_PLY, MATE_IN_MAX_PLY);
 }

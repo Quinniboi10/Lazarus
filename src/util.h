@@ -8,7 +8,6 @@
 
 #include <algorithm>
 #include <bit>
-#include <cassert>
 #include <numbers>
 #include <sstream>
 #include <string_view>
@@ -20,7 +19,7 @@ inline bool read_bit(const u64 bb, const usize idx) {
 
 template<u8 value>
 inline void set_bit(u64& bitboard, const usize idx) {
-    assert(idx <= sizeof(u64) * 8);
+    traced_assert(idx <= sizeof(u64) * 8);
     if constexpr (value)
         bitboard |= (1ULL << idx);
     else
@@ -28,7 +27,7 @@ inline void set_bit(u64& bitboard, const usize idx) {
 }
 
 inline Square pop_lsb(u64& bb) {
-    assert(bb > 0);
+    traced_assert(bb > 0);
     const auto sq = static_cast<Square>(std::countr_zero(bb));
     bb &= bb - 1;
     return sq;
@@ -228,7 +227,7 @@ inline string suffix_num(double num) {
 
 // Parses human-readable numbers
 inline u64 parse_suffixed_num(string text) {
-    assert(!text.empty());
+    traced_assert(!text.empty());
 
     // Trim leading/trailing whitespace
     auto is_space = [](const unsigned char c) { return std::isspace(c); };
@@ -237,7 +236,7 @@ inline u64 parse_suffixed_num(string text) {
     while (!text.empty() && is_space(text.back()))
         text.erase(text.size() - 1);
 
-    assert(!text.empty());
+    traced_assert(!text.empty());
 
     double multiplier = 1.0;
 
@@ -267,7 +266,7 @@ inline u64 parse_suffixed_num(string text) {
         }
     }
 
-    assert(!text.empty());
+    traced_assert(!text.empty());
 
     std::erase(text, ',');
 

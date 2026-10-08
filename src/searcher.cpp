@@ -1,4 +1,5 @@
 #include "searcher.h"
+
 #include "cursor.h"
 #include "globals.h"
 #include "search.h"
